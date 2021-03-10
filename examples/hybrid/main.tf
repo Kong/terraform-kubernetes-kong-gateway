@@ -30,6 +30,7 @@ module "postgres" {
   kong_superuser_secret_name = var.kong_superuser_secret_name
   kong_database_secret_name  = var.kong_database_secret_name
   kong_license_secret_name   = var.kong_license_secret_name
+  kong_image                 = var.kong_image
 }
 
 module "tls_cluster" {
