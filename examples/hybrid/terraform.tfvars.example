@@ -2,6 +2,8 @@ kube_config_file   = "~/.kube/config"
 docker_config_file = "~/.docker/config.json"
 kong_license_file  = "~/.kong_license"
 
+kong_image = "kong-docker-kong-enterprise-edition-docker.bintray.io/kong-enterprise-edition:2.3.2.0-alpine"
+
 super_admin_password   = "password"
 kong_database_password = "kong"
 
@@ -70,92 +72,3 @@ kong_data_plane_config = {
   "KONG_SSL_CERT"                    = "/etc/secrets/kong-proxy/tls.crt",
   "KONG_SSL_CERT_KEY"                = "/etc/secrets/kong-proxy/tls.key",
 }
-
-##### uncomment below to create all services as internal ClusterIP services
-#dp_lb_svcs = {}
-#dp_svcs = {
-#  "kong-proxy" = {
-#    namespace = "kong-hybrid-dp"
-#    ports = {
-#      "kong-proxy" = {
-#        port        = 8000
-#        protocol    = "TCP"
-#        target_port = 8000
-#      },
-#      "kong-proxy-ssl" = {
-#        port        = 8443
-#        protocol    = "TCP"
-#        target_port = 8443
-#      }
-#    }
-#  }
-#}
-#
-#cp_lb_svcs = {}
-#cp_svcs = {
-#  "kong-cluster" = {
-#    namespace = "kong-hybrid-cp"
-#    ports = {
-#      "kong-cluster" = {
-#        port        = 8005
-#        protocol    = "TCP"
-#        target_port = 8005
-#      },
-#      "kong-telemetry" = {
-#        port        = 8006
-#        protocol    = "TCP"
-#        target_port = 8006
-#      }
-#    }
-#  }
-#  "kong-api-man" = {
-#    namespace = "kong-hybrid-cp"
-#    ports = {
-#      "kong-admin" = {
-#        port        = 8001
-#        protocol    = "TCP"
-#        target_port = 8001
-#      },
-#      "kong-manager" = {
-#        port        = 8002
-#        protocol    = "TCP"
-#        target_port = 8002
-#      },
-#      "kong-admin-ssl" = {
-#        port        = 8444
-#        protocol    = "TCP"
-#        target_port = 8444
-#      },
-#      "kong-manager-ssl" = {
-#        port        = 8445
-#        protocol    = "TCP"
-#        target_port = 8445
-#      }
-#    }
-#  }
-#  "kong-portal" = {
-#    namespace = "kong-hybrid-cp"
-#    ports = {
-#      "kong-portal-admin" = {
-#        port        = 8004
-#        protocol    = "TCP"
-#        target_port = 8004
-#      },
-#      "kong-portal-gui" = {
-#        port        = 8003
-#        protocol    = "TCP"
-#        target_port = 8003
-#      },
-#      "kong-portal-admin-ssl" = {
-#        port        = 8447
-#        protocol    = "TCP"
-#        target_port = 8447
-#      },
-#      "kong-portal-gui-ssl" = {
-#        port        = 8446
-#        protocol    = "TCP"
-#        target_port = 8446
-#      }
-#    }
-#  }
-#}
