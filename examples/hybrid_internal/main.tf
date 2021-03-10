@@ -30,6 +30,7 @@ module "postgres" {
   kong_superuser_secret_name = var.kong_superuser_secret_name
   kong_database_secret_name  = var.kong_database_secret_name
   kong_license_secret_name   = var.kong_license_secret_name
+  kong_image                 = var.kong_image
 }
 
 module "tls_cluster" {
@@ -74,7 +75,7 @@ locals {
 
   kong_cp_deployment_name = "kong-enterprise-cp"
   kong_dp_deployment_name = "kong-enterprise-dp"
-  kong_image              = "kong-docker-kong-enterprise-edition-docker.bintray.io/kong-enterprise-edition:2.2.0.0-alpine"
+  kong_image              = var.kong_image
 
   kong_image_pull_secrets = [
     {

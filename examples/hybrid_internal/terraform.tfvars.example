@@ -2,6 +2,8 @@ kube_config_file   = "~/.kube/config"
 docker_config_file = "~/.docker/config.json"
 kong_license_file  = "~/.kong_license"
 
+kong_image = "kong-docker-kong-enterprise-edition-docker.bintray.io/kong-enterprise-edition:2.3.2.0-alpine"
+
 super_admin_password   = "password"
 kong_database_password = "kong"
 

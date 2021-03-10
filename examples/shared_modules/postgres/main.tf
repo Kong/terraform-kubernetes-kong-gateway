@@ -119,7 +119,7 @@ resource "kubernetes_job" "demo" {
           }
         }
         container {
-          image = "kong-docker-kong-enterprise-edition-docker.bintray.io/kong-enterprise-edition:2.2.0.0-alpine"
+          image = var.kong_image
           name  = "kong-migrations"
           command = [
             "/bin/sh",

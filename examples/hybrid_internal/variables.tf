@@ -1,3 +1,9 @@
+variable "kong_image" {
+  description = "The kong container image file to use"
+  type        = string
+  default     = "kong-docker-kong-enterprise-edition-docker.bintray.io/kong-enterprise-edition:2.3.2.0-alpine"
+}
+
 variable "kube_config_file" {
   description = "Path to the kubernetes configuration file. Used by the terraform provider"
   type        = string
