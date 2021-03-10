@@ -1,0 +1,161 @@
+kube_config_file   = "~/.kube/config"
+docker_config_file = "~/.docker/config.json"
+kong_license_file  = "~/.kong_license"
+
+super_admin_password   = "password"
+kong_database_password = "kong"
+
+kong_control_plane_config = {
+  "KONG_ADMIN_LISTEN"             = "0.0.0.0:8001, 0.0.0.0:8444 ssl",
+  "KONG_ADMIN_SSL_CERT_KEY"       = "/etc/secrets/kong-admin-api/tls.key",
+  "KONG_ADMIN_SSL_CERT"           = "/etc/secrets/kong-admin-api/tls.crt",
+  "KONG_ADMIN_GUI_SSL_CERT_KEY"   = "/etc/secrets/kong-admin-gui/tls.key",
+  "KONG_ADMIN_GUI_SSL_CERT"       = "/etc/secrets/kong-admin-gui/tls.crt",
+  "KONG_PORTAL_GUI_SSL_CERT_KEY"  = "/etc/secrets/kong-portal-gui/tls.key",
+  "KONG_PORTAL_GUI_SSL_CERT"      = "/etc/secrets/kong-portal-gui/tls.crt",
+  "KONG_PORTAL_API_SSL_CERT_KEY"  = "/etc/secrets/kong-portal-api/tls.key",
+  "KONG_PORTAL_API_SSL_CERT"      = "/etc/secrets/kong-portal-api/tls.crt",
+  "KONG_LOG_LEVEL"                = "debug",
+  "KONG_ADMIN_GUI_AUTH"           = "basic-auth",
+  "KONG_ADMIN_GUI_LISTEN"         = "0.0.0.0:8002, 0.0.0.0:8445 ssl",
+  "KONG_ENFORCE_RBAC"             = "on",
+  "KONG_PROXY_ACCESS_LOG"         = "/dev/stdout",
+  "KONG_ADMIN_ACCESS_LOG"         = "/dev/stdout",
+  "KONG_PROXY_ERROR_LOG"          = "/dev/stderr",
+  "KONG_ADMIN_ERROR_LOG"          = "/dev/stderr",
+  "KONG_PORTAL"                   = "on",
+  "KONG_ADMIN_GUI_FLAGS"          = "{\"IMMUNITY_ENABLED\":true}",
+  "KONG_PORTAL_GUI_LISTEN"        = "0.0.0.0:8003, 0.0.0.0:8446 ssl",
+  "KONG_PORTAL_API_LISTEN"        = "0.0.0.0:8004, 0.0.0.0:8447 ssl",
+  "KONG_PORTAL_GUI_PROTOCOL"      = "https",
+  "KONG_PORTAL_AUTH"              = "basic-auth",
+  "KONG_ANONYMOUS_REPORTS"        = "off",
+  "KONG_ROLE"                     = "control_plane",
+  "KONG_CLUSTER_CERT"             = "/etc/secrets/kong-cluster/tls.crt",
+  "KONG_CLUSTER_CERT_KEY"         = "/etc/secrets/kong-cluster/tls.key",
+  "KONG_CLUSTER_LISTEN"           = "0.0.0.0:8005 ssl",
+  "KONG_CLUSTER_MTLS"             = "shared",
+  "KONG_CLUSTER_TELEMETRY_LISTEN" = "0.0.0.0:8006 ssl",
+  "KONG_STATUS_LISTEN"            = "0.0.0.0:8100",
+  "KONG_STREAM_LISTEN"            = "off",
+}
+
+kong_data_plane_config = {
+  "KONG_CLUSTER_CONTROL_PLANE"       = "kong-cluster.kong-hybrid-cp.svc.cluster.local:8005",
+  "KONG_CLUSTER_TELEMETRY_ENDPOINT"  = "kong-cluster.kong-hybrid-cp.svc.cluster.local:8006",
+  "KONG_ADMIN_ACCESS_LOG"            = "/dev/stdout",
+  "KONG_PROXY_ACCESS_LOG"            = "/dev/stdout",
+  "KONG_ADMIN_ACCESS_LOG"            = "/dev/stdout",
+  "KONG_PROXY_ERROR_LOG"             = "/dev/stderr",
+  "KONG_ADMIN_ERROR_LOG"             = "/dev/stderr",
+  "KONG_ADMIN_GUI_LISTEN"            = "off",
+  "KONG_ADMIN_LISTEN"                = "off",
+  "KONG_CLUSTER_CERT"                = "/etc/secrets/kong-cluster/tls.crt",
+  "KONG_CLUSTER_CERT_KEY"            = "/etc/secrets/kong-cluster/tls.key",
+  "KONG_LUA_SSL_TRUSTED_CERTIFICATE" = "/etc/secrets/kong-cluster/tls.crt",
+  "KONG_ROLE"                        = "data_plane",
+  "KONG_CLUSTER_LISTEN"              = "off",
+  "KONG_CLUSTER_MTLS"                = "shared",
+  "KONG_CLUSTER_TELEMETRY_LISTEN"    = "off",
+  "KONG_DATABASE"                    = "off",
+  "KONG_LOG_LEVEL"                   = "debug",
+  "KONG_LUA_PACKAGE_PATH"            = "/opt/?.lua;/opt/?/init.lua;;",
+  "KONG_NGINX_WORKER_PROCESSES"      = "2",
+  "KONG_PLUGINS"                     = "bundled",
+  "KONG_PROXY_ACCESS_LOG"            = "/dev/stdout",
+  "KONG_PROXY_ERROR_LOG"             = "/dev/stderr",
+  "KONG_STREAM_LISTEN"               = "off"
+  "KONG_PROXY_LISTEN"                = "0.0.0.0:8000, 0.0.0.0:8443",
+  "KONG_STATUS_LISTEN"               = "0.0.0.0:8100",
+  "KONG_SSL_CERT"                    = "/etc/secrets/kong-proxy/tls.crt",
+  "KONG_SSL_CERT_KEY"                = "/etc/secrets/kong-proxy/tls.key",
+}
+
+##### uncomment below to create all services as internal ClusterIP services
+#dp_lb_svcs = {}
+#dp_svcs = {
+#  "kong-proxy" = {
+#    namespace = "kong-hybrid-dp"
+#    ports = {
+#      "kong-proxy" = {
+#        port        = 8000
+#        protocol    = "TCP"
+#        target_port = 8000
+#      },
+#      "kong-proxy-ssl" = {
+#        port        = 8443
+#        protocol    = "TCP"
+#        target_port = 8443
+#      }
+#    }
+#  }
+#}
+#
+#cp_lb_svcs = {}
+#cp_svcs = {
+#  "kong-cluster" = {
+#    namespace = "kong-hybrid-cp"
+#    ports = {
+#      "kong-cluster" = {
+#        port        = 8005
+#        protocol    = "TCP"
+#        target_port = 8005
+#      },
+#      "kong-telemetry" = {
+#        port        = 8006
+#        protocol    = "TCP"
+#        target_port = 8006
+#      }
+#    }
+#  }
+#  "kong-api-man" = {
+#    namespace = "kong-hybrid-cp"
+#    ports = {
+#      "kong-admin" = {
+#        port        = 8001
+#        protocol    = "TCP"
+#        target_port = 8001
+#      },
+#      "kong-manager" = {
+#        port        = 8002
+#        protocol    = "TCP"
+#        target_port = 8002
+#      },
+#      "kong-admin-ssl" = {
+#        port        = 8444
+#        protocol    = "TCP"
+#        target_port = 8444
+#      },
+#      "kong-manager-ssl" = {
+#        port        = 8445
+#        protocol    = "TCP"
+#        target_port = 8445
+#      }
+#    }
+#  }
+#  "kong-portal" = {
+#    namespace = "kong-hybrid-cp"
+#    ports = {
+#      "kong-portal-admin" = {
+#        port        = 8004
+#        protocol    = "TCP"
+#        target_port = 8004
+#      },
+#      "kong-portal-gui" = {
+#        port        = 8003
+#        protocol    = "TCP"
+#        target_port = 8003
+#      },
+#      "kong-portal-admin-ssl" = {
+#        port        = 8447
+#        protocol    = "TCP"
+#        target_port = 8447
+#      },
+#      "kong-portal-gui-ssl" = {
+#        port        = 8446
+#        protocol    = "TCP"
+#        target_port = 8446
+#      }
+#    }
+#  }
+#}
