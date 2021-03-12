@@ -31,9 +31,9 @@ jobs:
           EOF
           cat .ci/.kube/config
           cp examples/hybrid_internal/terraform.tfvars.example examples/hybrid_internal/terraform.tfvars
-          sed -i 's-~/.kube/config-.ci/.kube/config-g' examples/hybrid_internal/terraform.tfvars
-          sed -i 's-~/.docker/config.json-.ci/docker/config.json-g' examples/hybrid_internal/terraform.tfvars
-          sed -i 's-~/.kong_license-.ci/kong_license-g' examples/hybrid_internal/terraform.tfvars
+          sed -i 's-~/.kube/config-/github/workspace/.ci/.kube/config-g' examples/hybrid_internal/terraform.tfvars
+          sed -i 's-~/.docker/config.json-/github/workspace/.ci/docker/config.json-g' examples/hybrid_internal/terraform.tfvars
+          sed -i 's-~/.kong_license-/github/workspace/.ci/kong_license-g' examples/hybrid_internal/terraform.tfvars
       - name: wait
         run: while [[ $(kubectl -n kube-system get pods -l k8s-app=kube-dns -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for pod" && sleep 1; done
       - name: Kitchen Test
