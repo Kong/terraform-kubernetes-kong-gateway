@@ -20,7 +20,7 @@ jobs:
           mkdir -p .ci/docker
           cp -r /home/runner/work/_temp/.minikube/ .ci/
           cp -r /home/runner/.kube .ci/
-          sed -i 's-/home/runner/work/_temp-.ci-g' .ci/kube/config
+          sed -i 's-/home/runner/work/_temp-.ci-g' .ci/.kube/config
           cat << EOF > .ci/docker/config.json
           ${{ secrets.DOCKER_CONFIG }}
           EOF
@@ -28,9 +28,9 @@ jobs:
           ${{ secrets.KONG_LICENSE_FILE }}
           EOF
           ls -la
-          cat .ci/kube/config
+          cat .ci/.kube/config
           cp examples/hybrid_internal/terraform.tfvars.example examples/hybrid_internal/terraform.tfvars
-          sed -i 's-~/.kube/config-.ci/kube/config-g' examples/hybrid_internal/terraform.tfvars
+          sed -i 's-~/.kube/config-.ci/.kube/config-g' examples/hybrid_internal/terraform.tfvars
           sed -i 's-~/.docker/config.json-.ci/docker/config.json-g' examples/hybrid_internal/terraform.tfvars
           sed -i 's-~/.kong_license-.ci/kong_license-g' examples/hybrid_internal/terraform.tfvars
       - name: wait
