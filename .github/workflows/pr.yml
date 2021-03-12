@@ -23,7 +23,7 @@ jobs:
           cat << EOF > ~/.kong_license
           ${{ secrets.KONG_LICENSE_FILE }}
           EOF
-          cat << EOF examples/hybrid/terraform.tfvars
+          cat << EOF > examples/hybrid/terraform.tfvars
           kong_control_plane_config = {
             "KONG_ADMIN_LISTEN" = "0.0.0.0:8001, 0.0.0.0:8444 ssl",
             "KONG_ADMIN_SSL_CERT_KEY" = "/etc/secrets/kong-admin-api/tls.key",
