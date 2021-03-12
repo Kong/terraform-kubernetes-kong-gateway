@@ -20,7 +20,7 @@ jobs:
           mkdir -p .ci/docker
           cp -r /home/runner/work/_temp/.minikube/ .ci/
           cp -r /home/runner/.kube .ci/
-          sed -i 's-/home/runner/work/_temp-.ci' .ci/kube/config
+          sed -i 's-/home/runner/work/_temp-.ci-g' .ci/kube/config
           cat << EOF > .ci/docker/config.json
           ${{ secrets.DOCKER_CONFIG }}
           EOF
@@ -28,11 +28,11 @@ jobs:
           ${{ secrets.KONG_LICENSE_FILE }}
           EOF
           ls -la
-          cat .kube/config
+          cat .ci/kube/config
           cp examples/hybrid_internal/terraform.tfvars.example examples/hybrid_internal/terraform.tfvars
           sed -i 's-~/.kube/config-.ci/kube/config-g' examples/hybrid_internal/terraform.tfvars
-          sed -i 's-~/.docker/config.json-.docker/config.json-g' examples/hybrid_internal/terraform.tfvars
-          sed -i 's-~/.kong_license-.kong_license-g' examples/hybrid_internal/terraform.tfvars
+          sed -i 's-~/.docker/config.json-.ci/docker/config.json-g' examples/hybrid_internal/terraform.tfvars
+          sed -i 's-~/.kong_license-.ci/kong_license-g' examples/hybrid_internal/terraform.tfvars
       - name: wait
         run: while [[ $(kubectl -n kube-system get pods -l k8s-app=kube-dns -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for pod" && sleep 1; done
       - name: Kitchen Test
