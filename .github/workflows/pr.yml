@@ -1,0 +1,102 @@
+name: PR Open
+
+on: [pull_request]
+
+jobs:
+  deployment:
+    name: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup Minikube
+        uses: manusa/actions-setup-minikube@v2.3.0
+        with:
+          minikube version: 'v1.18.1'
+          kubernetes version: 'v1.20.2'
+          github token: ${{ secrets.GITHUB_TOKEN }}
+      - name: write docker config
+        script: |
+          cat << EOF > ~/.docker/config.json
+          ${{ secrets.DOCKER_CONFIG }}
+          EOF
+          cat << EOF ~/.kong_license
+          ${{ secrets.KONG_LICENSE_FILE }}
+          EOF
+          cat << EOF examples/hybrid/terraform.tfvars
+          kong_control_plane_config = {
+            "KONG_ADMIN_LISTEN" = "0.0.0.0:8001, 0.0.0.0:8444 ssl",
+            "KONG_ADMIN_SSL_CERT_KEY" = "/etc/secrets/kong-admin-api/tls.key",
+            "KONG_ADMIN_SSL_CERT" = "/etc/secrets/kong-admin-api/tls.crt",
+            "KONG_ADMIN_GUI_SSL_CERT_KEY" = "/etc/secrets/kong-admin-gui/tls.key",
+            "KONG_ADMIN_GUI_SSL_CERT" = "/etc/secrets/kong-admin-gui/tls.crt",
+            "KONG_PORTAL_GUI_SSL_CERT_KEY" = "/etc/secrets/kong-portal-gui/tls.key",
+            "KONG_PORTAL_GUI_SSL_CERT" = "/etc/secrets/kong-portal-gui/tls.crt",
+            "KONG_PORTAL_API_SSL_CERT_KEY" = "/etc/secrets/kong-portal-api/tls.key",
+            "KONG_PORTAL_API_SSL_CERT" = "/etc/secrets/kong-portal-api/tls.crt",
+            "KONG_LOG_LEVEL" = "debug",
+            "KONG_ADMIN_GUI_AUTH" = "basic-auth",
+            "KONG_ADMIN_GUI_LISTEN" = "0.0.0.0:8002, 0.0.0.0:8445 ssl",
+            "KONG_ENFORCE_RBAC" = "on",
+            "KONG_PROXY_ACCESS_LOG" = "/dev/stdout",
+            "KONG_ADMIN_ACCESS_LOG" = "/dev/stdout",
+            "KONG_PROXY_ERROR_LOG" = "/dev/stderr",
+            "KONG_ADMIN_ERROR_LOG" = "/dev/stderr",
+            "KONG_PORTAL" = "on",
+            "KONG_ADMIN_GUI_FLAGS" = "{\"IMMUNITY_ENABLED\":true}",
+            "KONG_PORTAL_GUI_LISTEN" = "0.0.0.0:8003, 0.0.0.0:8446 ssl",
+            "KONG_PORTAL_API_LISTEN" = "0.0.0.0:8004, 0.0.0.0:8447 ssl",
+            "KONG_PORTAL_GUI_PROTOCOL" = "https",
+            "KONG_PORTAL_AUTH" = "basic-auth",
+            "KONG_ANONYMOUS_REPORTS" = "off",
+            "KONG_ROLE" = "control_plane",
+            "KONG_CLUSTER_CERT" = "/etc/secrets/kong-cluster/tls.crt",
+            "KONG_CLUSTER_CERT_KEY" = "/etc/secrets/kong-cluster/tls.key",
+            "KONG_CLUSTER_LISTEN" = "0.0.0.0:8005 ssl",
+            "KONG_CLUSTER_MTLS" = "shared",
+            "KONG_CLUSTER_TELEMETRY_LISTEN" = "0.0.0.0:8006 ssl",
+            "KONG_STATUS_LISTEN" = "0.0.0.0:8100",
+            "KONG_STREAM_LISTEN" = "off",
+          }
+          kong_data_plane_config = {
+            "KONG_CLUSTER_CONTROL_PLANE" = "kong-cluster.kong-hybrid-cp.svc.cluster.local:8005",
+            "KONG_CLUSTER_TELEMETRY_ENDPOINT" = "kong-cluster.kong-hybrid-cp.svc.cluster.local:8006",
+            "KONG_ADMIN_ACCESS_LOG" = "/dev/stdout",
+            "KONG_PROXY_ACCESS_LOG" = "/dev/stdout",
+            "KONG_ADMIN_ACCESS_LOG" = "/dev/stdout",
+            "KONG_PROXY_ERROR_LOG" = "/dev/stderr",
+            "KONG_ADMIN_ERROR_LOG" = "/dev/stderr",
+            "KONG_ADMIN_GUI_LISTEN" = "off",
+            "KONG_ADMIN_LISTEN" = "off",
+            "KONG_CLUSTER_CERT" = "/etc/secrets/kong-cluster/tls.crt",
+            "KONG_CLUSTER_CERT_KEY" = "/etc/secrets/kong-cluster/tls.key",
+            "KONG_LUA_SSL_TRUSTED_CERTIFICATE" = "/etc/secrets/kong-cluster/tls.crt",
+            "KONG_ROLE" = "data_plane",
+            "KONG_CLUSTER_LISTEN" = "off",
+            "KONG_CLUSTER_MTLS" = "shared",
+            "KONG_CLUSTER_TELEMETRY_LISTEN" = "off",
+            "KONG_DATABASE" = "off",
+            "KONG_LOG_LEVEL" = "debug",
+            "KONG_LUA_PACKAGE_PATH" = "/opt/?.lua;/opt/?/init.lua;;",
+            "KONG_NGINX_WORKER_PROCESSES" = "2",
+            "KONG_PLUGINS" = "bundled",
+            "KONG_PROXY_ACCESS_LOG" = "/dev/stdout",
+            "KONG_PROXY_ERROR_LOG" = "/dev/stderr",
+            "KONG_STREAM_LISTEN" = "off"
+            "KONG_PROXY_LISTEN" = "0.0.0.0:8000, 0.0.0.0:8443",
+            "KONG_STATUS_LISTEN" = "0.0.0.0:8100",
+            "KONG_SSL_CERT" = "/etc/secrets/kong-proxy/tls.crt",
+            "KONG_SSL_CERT_KEY" = "/etc/secrets/kong-proxy/tls.key",
+          }
+          EOF
+      - name: wait
+        run: while [[ $(kubectl -n kube-system get pods -l k8s-app=kube-dns -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for pod" && sleep 1; done
+      - name: Kitchen Test
+        uses: dwp/github-action-kitchen-terraform@0.14.7
+        with:
+          kitchen-command: test --destroy=always
+          aws-account-number: "REDECTED"
+        env:
+          TF_VAR_super_admin_password: ${{ secrets.SUPER_ADMIN_PASSWORD }}
+          TF_VAR_kong_database_password: ${{ secrets.KONG_DATABASE_PASSWORD }}
+          TF_VAR_kong_image: ${{ secrets.KONG_IMAGE }}
