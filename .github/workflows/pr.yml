@@ -27,7 +27,7 @@ jobs:
           ${{ secrets.KONG_LICENSE_FILE }}
           EOF
           ls -la
-          cat .kube.config
+          cat .kube/config
           cp examples/hybrid/terraform.tfvars.examples examples/hybrid/terraform.tfvars
           sed -i 's-~/.kube/config-.kube/config-g' examples/hybrid/terraform.tfvars
           sed -i 's-~/.docker/config.json-.docker/config.json-g' examples/hybrid/terraform.tfvars
