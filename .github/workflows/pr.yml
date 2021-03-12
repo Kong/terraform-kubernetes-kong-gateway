@@ -16,7 +16,7 @@ jobs:
           kubernetes version: 'v1.20.2'
           github token: ${{ secrets.GITHUB_TOKEN }}
       - name: copy kube config to repo
-      - run: cp -r /home/runner/.kube .
+        run: cp -r /home/runner/.kube .
       - name: write docker config
         run: |
           mkdir .docker
