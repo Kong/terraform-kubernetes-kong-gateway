@@ -20,7 +20,7 @@ jobs:
           cat << EOF > ~/.docker/config.json
           ${{ secrets.DOCKER_CONFIG }}
           EOF
-          cat << EOF ~/.kong_license
+          cat << EOF > ~/.kong_license
           ${{ secrets.KONG_LICENSE_FILE }}
           EOF
           cat << EOF examples/hybrid/terraform.tfvars
@@ -94,7 +94,7 @@ jobs:
       - name: Kitchen Test
         uses: dwp/github-action-kitchen-terraform@0.14.7
         with:
-          kitchen-command: test --destroy=always
+          kitchen-command: test default --destroy=always
           aws-account-number: "REDECTED"
         env:
           TF_VAR_super_admin_password: ${{ secrets.SUPER_ADMIN_PASSWORD }}
