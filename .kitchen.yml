@@ -15,7 +15,8 @@ suites:
   - name: default
     driver:
       root_module_directory: examples/hybrid
-      variable_files: examples/hybrid/terraform.tfvars
+      variable_files:
+        - examples/hybrid/terraform.tfvars
     verifier:
       systems:
         - name: default
