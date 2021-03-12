@@ -16,6 +16,11 @@ resource "kubernetes_service" "postgres" {
   }
 }
 
+locals {
+  pg_ip   = kubernetes_service.postgres.spec.0.cluster_ip
+  pg_port = kubernetes_service.postgres.spec.0.port.0.port
+}
+
 resource "kubernetes_stateful_set" "postgres" {
   metadata {
     name      = "postgres"
@@ -111,11 +116,11 @@ resource "kubernetes_job" "demo" {
           ]
           env {
             name  = "KONG_PG_HOST"
-            value = "postgres"
+            value = local.pg_ip
           }
           env {
             name  = "KONG_PG_PORT"
-            value = "5432"
+            value = local.pg_port
           }
         }
         container {
@@ -159,7 +164,7 @@ resource "kubernetes_job" "demo" {
           }
           env {
             name  = "KONG_PG_HOST"
-            value = "postgres"
+            value = local.pg_ip
           }
           env {
             name  = "KONG_PG_USER"
@@ -171,7 +176,7 @@ resource "kubernetes_job" "demo" {
           }
           env {
             name  = "KONG_PORT"
-            value = "5432"
+            value = local.pg_port
           }
         }
       }
