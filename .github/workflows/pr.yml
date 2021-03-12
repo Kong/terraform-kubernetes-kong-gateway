@@ -15,23 +15,24 @@ jobs:
           minikube version: 'v1.18.1'
           kubernetes version: 'v1.20.2'
           github token: ${{ secrets.GITHUB_TOKEN }}
-      - name: copy kube config to repo
-        run: cp -r /home/runner/.kube .
       - name: write docker config
         run: |
-          mkdir .docker
-          cat << EOF > .docker/config.json
+          mkdir -p .ci/docker
+          cp -r /home/runner/work/_temp/.minikube/ .ci/
+          cp -r /home/runner/.kube .ci/
+          sed -i 's-/home/runner/work/_temp-.ci' .ci/kube/config
+          cat << EOF > .ci/docker/config.json
           ${{ secrets.DOCKER_CONFIG }}
           EOF
-          cat << EOF > .kong_license
+          cat << EOF > .ci/kong_license
           ${{ secrets.KONG_LICENSE_FILE }}
           EOF
           ls -la
           cat .kube/config
-          cp examples/hybrid/terraform.tfvars.examples examples/hybrid/terraform.tfvars
-          sed -i 's-~/.kube/config-.kube/config-g' examples/hybrid/terraform.tfvars
-          sed -i 's-~/.docker/config.json-.docker/config.json-g' examples/hybrid/terraform.tfvars
-          sed -i 's-~/.kong_license-.kong_license-g' examples/hybrid/terraform.tfvars
+          cp examples/hybrid_internal/terraform.tfvars.example examples/hybrid_internal/terraform.tfvars
+          sed -i 's-~/.kube/config-.ci/kube/config-g' examples/hybrid_internal/terraform.tfvars
+          sed -i 's-~/.docker/config.json-.docker/config.json-g' examples/hybrid_internal/terraform.tfvars
+          sed -i 's-~/.kong_license-.kong_license-g' examples/hybrid_internal/terraform.tfvars
       - name: wait
         run: while [[ $(kubectl -n kube-system get pods -l k8s-app=kube-dns -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for pod" && sleep 1; done
       - name: Kitchen Test
