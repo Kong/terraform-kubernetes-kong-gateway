@@ -17,6 +17,8 @@ jobs:
           github token: ${{ secrets.GITHUB_TOKEN }}
       - name: write docker config
         run: |
+          out=$(pwd)
+          echo $out
           mkdir -p .ci/docker
           cp -r /home/runner/work/_temp/.minikube/ .ci/
           cp -r /home/runner/.kube .ci/
@@ -27,7 +29,6 @@ jobs:
           cat << EOF > .ci/kong_license
           ${{ secrets.KONG_LICENSE_FILE }}
           EOF
-          ls -la
           cat .ci/.kube/config
           cp examples/hybrid_internal/terraform.tfvars.example examples/hybrid_internal/terraform.tfvars
           sed -i 's-~/.kube/config-.ci/.kube/config-g' examples/hybrid_internal/terraform.tfvars
