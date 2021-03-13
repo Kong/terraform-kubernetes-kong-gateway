@@ -20,11 +20,16 @@ jobs:
           github token: ${{ secrets.GITHUB_TOKEN }}
       - name: wait
         run: while [[ $(kubectl -n kube-system get pods -l k8s-app=kube-dns -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for pod" && sleep 1; done
+      - name: Docker login
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ secrets.DOCKER_REPO }}
+          username: ${{ secrets.DOCKER_ID }}
+          password: ${{ secrets.DOCKER_KEY }}
       - name: write config
         run: |
           gem install bundler --user
           bundle install
-          docker login -u ${{ secrets.DOCKER_ID }} -p ${{ secrets.DOCKER_KEY }} ${{ secrets.DOCKER_REPO }}
           ls ~/.docker
           cat << EOF > ~/.kong_license
           ${{ secrets.KONG_LICENSE_FILE }}
