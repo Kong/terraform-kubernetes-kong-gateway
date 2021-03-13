@@ -1,56 +1,28 @@
-name: Main
+name: PR Closed
 
 on:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - 'docs/**'
-      - '*.md'
+  pull_request:
+    types: [ closed ]
 
 jobs:
-  get-publish-version:
+  merge_job:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
-    outputs:
-      publish-version: ${{ steps.get-publish-version.outputs.publish-version }}
     steps:
-      - name: Prepare SemVer
-        id: prepare-semver
-        run: |
-          LATEST_VERSION=$(curl --silent "https://api.github.com/repos/${{ github.repository }}/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-          [  -z "$LATEST_VERSION" ] && LATEST_VERSION="0.0.0"
-          echo ::set-output name=latest_version_out::$LATEST_VERSION
-          commit_message="${{ github.event.head_commit.message }}"
-          if [[ "${commit_message,,}" == *"major release"* ]]; then
-            echo ::set-output name=semver_increment::"m"
-          elif [[ "${commit_message,,}" == *"minor release"* ]]; then
-            echo ::set-output name=semver_increment::"i"
-          else
-            echo ::set-output name=semver_increment::"p"
-          fi
-      - name: Increment SemVer
-        id: semver
-        uses: matt-FFFFFF/simple-semver@v0.1.0
-        with:
-          semver-input: ${{ steps.prepare-semver.outputs.latest_version_out }}
-          increment: ${{ steps.prepare-semver.outputs.semver_increment }}
-      - name: Get publish version
-        id: get-publish-version
-        run: echo "::set-output name=publish-version::${{ steps.semver.outputs.semver }}"
+    - run: |
+        echo PR #${{ github.event.number }} has been merged
+    - uses: actions/checkout@v2
+    - name: Bump version and push tag
+      uses: anothrNick/github-tag-action@1.26.0
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        WITH_V: true
+        DEFAULT_BUMP: patch
+        RELEASE_BRANCHES: main
 
-  publish-github-release:
+  close_job:
+    if: github.event.pull_request.merged == false
     runs-on: ubuntu-latest
-    needs: [get-publish-version]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@master
-      - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@latest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ needs.get-publish-version.outputs.publish-version }}
-          release_name: Release ${{ needs.get-publish-version.outputs.publish-version }}
-          draft: false
-          prerelease: false
+    - run: |
+        echo PR #${{ github.event.number }} has been closed without being merged
