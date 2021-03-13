@@ -33,8 +33,17 @@ jobs:
           EOF
           cp examples/hybrid_internal/terraform.tfvars.example examples/hybrid_internal/terraform.tfvars
       - name: Kitchen Test
-        run: kitchen test default --destroy=always
+        run: kitchen converge default
         env:
           TF_VAR_super_admin_password: ${{ secrets.SUPER_ADMIN_PASSWORD }}
           TF_VAR_kong_database_password: ${{ secrets.KONG_DATABASE_PASSWORD }}
           TF_VAR_kong_image: ${{ secrets.KONG_IMAGE }}
+      - name: get pod
+        run: kubectl get pods -n kong-hybrid-cp -l name=kong-enterprise-cp 
+      - name: describe pod
+        run: kubectl describe pod -n kong-hybrid-cp -l name=kong-enterprise-cp
+      - name: pod logs
+        run: kubectl logs -n kong-hybrid-cp -l name=kong-enterprise-cp
+      - name: Kitchen Destroy
+        run: kitchen destroy default
+
