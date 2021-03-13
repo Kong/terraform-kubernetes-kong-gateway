@@ -30,12 +30,13 @@ jobs:
     if: github.event.pull_request.draft == false
     steps:
       - name: update
-        run: sudo apt install -y ca-certificates
+        run: sudo apt update -y && sudo apt upgrade -y
       - name: Checkout
         uses: actions/checkout@v2
-      - uses: actions/setup-ruby@v1
+      - uses: ruby/setup-ruby@v1
         with:
           ruby-version: '2.7.2'
+          bundler-cache: true
       - name: Setup Minikube
         uses: manusa/actions-setup-minikube@v2.3.0
         with:
