@@ -1,9 +1,9 @@
 require 'net/http'
 require 'uri'
 
-api = input('kong-api-endpoint')
-manager = input('kong-manager-endpoint')
-proxy = input('kong-proxy-endpoint')
+api = input('kong-api-endpoint-ip')
+manager = input('kong-manager-endpoint-ip')
+proxy = input('kong-proxy-endpoint-ip')
 token = input('kong-super-admin-token')
 
 # set up service and route so we can test

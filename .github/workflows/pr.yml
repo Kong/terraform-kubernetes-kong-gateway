@@ -49,13 +49,7 @@ jobs:
       - name: pod logs
         run: kubectl logs -n kong-hybrid-cp -l name=kong-enterprise-cp
       - name: Verify
-        run: |
-          kubectl get svc -A
-          api_ip=$(kubectl -n kong-hybrid-cp get svc kong-api-man -o jsonpath='{.spec.clusterIP}')
-          proxy_ip=$(kubectl -n kong-hybrid-dp get svc kong-proxy -o jsonpath='{.spec.clusterIP}')
-          curl -H "Kong-Admin-Token: $TOKEN" ${api_ip}:8001/clustering/status
-        env:
-          TOKEN: ${{ secrets.SUPER_ADMIN_PASSWORD }}
+        run: kitchen verify default
       - name: Kitchen Destroy
         run: kitchen destroy default
 
