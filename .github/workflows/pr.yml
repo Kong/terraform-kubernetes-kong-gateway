@@ -32,8 +32,6 @@ jobs:
           ${{ secrets.KONG_LICENSE_FILE }}
           EOF
           cp examples/hybrid_internal/terraform.tfvars.example examples/hybrid_internal/terraform.tfvars
-          sed -i 's-~/.docker/config.json-/github/workspace/.ci/docker/config.json-g' examples/hybrid_internal/terraform.tfvars
-          sed -i 's-~/.kong_license-/github/workspace/.ci/kong_license-g' examples/hybrid_internal/terraform.tfvars
       - name: Kitchen Test
         run: kitchen test default --destroy=always
         env:
