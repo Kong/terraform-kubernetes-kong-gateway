@@ -30,8 +30,6 @@ jobs:
         run: |
           gem install bundler --user
           bundle install
-          ls ~/.docker
-          ls -a ~/
           cat << EOF > ~/.kong_license
           ${{ secrets.KONG_LICENSE_FILE }}
           EOF
@@ -42,12 +40,22 @@ jobs:
           TF_VAR_super_admin_password: ${{ secrets.SUPER_ADMIN_PASSWORD }}
           TF_VAR_kong_database_password: ${{ secrets.KONG_DATABASE_PASSWORD }}
           TF_VAR_kong_image: ${{ secrets.KONG_IMAGE }}
+      - name: wait control plane
+        run: while [[ $(kubectl -n kong-hybrid-cp get pods -l name=kong-enterprise-cp -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for pod" && sleep 1; done
       - name: get pod
         run: kubectl get pods -n kong-hybrid-cp -l name=kong-enterprise-cp 
       - name: describe pod
         run: kubectl describe pod -n kong-hybrid-cp -l name=kong-enterprise-cp
       - name: pod logs
         run: kubectl logs -n kong-hybrid-cp -l name=kong-enterprise-cp
+      - name: Verify
+        run: |
+          kubectl get svc -A
+          api_ip=$(kubectl -n kong-hybrid-cp get svc kong-api-man -o jsonpath='{.spec.clusterIP}')
+          proxy_ip=$(kubectl -n kong-hybrid-dp get svc kong-proxy -o jsonpath='{.spec.clusterIP}')
+          curl -H "Kong-Admin-Token: $TOKEN" ${api_ip}:8001/clustering/status
+        env:
+          TOKEN: ${{ secrets.SUPER_ADMIN_PASSWORD }}
       - name: Kitchen Destroy
         run: kitchen destroy default
 
