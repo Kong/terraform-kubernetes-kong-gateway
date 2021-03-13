@@ -29,6 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     steps:
+      - name: update
+        run: sudo apt install -y ca-certificates
       - name: Checkout
         uses: actions/checkout@v2
       - uses: actions/setup-ruby@v1
