@@ -25,9 +25,6 @@ jobs:
           gem install bundler --user
           bundle install
           mkdir -p .ci/docker
-          cp -r /home/runner/work/_temp/.minikube/ .ci/
-          cp -r /home/runner/.kube .ci/
-          sed -i 's-/home/runner/work/_temp-.ci-g' .ci/.kube/config
           cat << EOF > .ci/docker/config.json
           ${{ secrets.DOCKER_CONFIG }}
           EOF
@@ -35,7 +32,6 @@ jobs:
           ${{ secrets.KONG_LICENSE_FILE }}
           EOF
           cp examples/hybrid_internal/terraform.tfvars.example examples/hybrid_internal/terraform.tfvars
-          sed -i 's-~/.kube/config-/github/workspace/.ci/.kube/config-g' examples/hybrid_internal/terraform.tfvars
           sed -i 's-~/.docker/config.json-/github/workspace/.ci/docker/config.json-g' examples/hybrid_internal/terraform.tfvars
           sed -i 's-~/.kong_license-/github/workspace/.ci/kong_license-g' examples/hybrid_internal/terraform.tfvars
       - name: Kitchen Test
