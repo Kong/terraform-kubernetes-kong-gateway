@@ -50,7 +50,7 @@ module "tls_services" {
 }
 
 locals {
-
+  # setting up some locals to shorten variable names
   dp_mounts = concat(module.tls_cluster.namespace_name_map[local.dp_ns])
   cp_mounts = concat(module.tls_cluster.namespace_name_map[local.cp_ns],
   module.tls_services.namespace_name_map[local.cp_ns])
