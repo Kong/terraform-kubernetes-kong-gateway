@@ -24,10 +24,8 @@ jobs:
         run: |
           gem install bundler --user
           bundle install
-          mkdir -p ~/docker
-          cat << EOF > ~/.docker/config.json
-          ${{ secrets.DOCKER_CONFIG }}
-          EOF
+          docker login -u ${{ secrets.DOCKER_ID }} -p ${{ secrets.DOCKER_KEY }} ${{ secrets.DOCKER_REPO }}
+          ls ~/.docker
           cat << EOF > ~/.kong_license
           ${{ secrets.KONG_LICENSE_FILE }}
           EOF
