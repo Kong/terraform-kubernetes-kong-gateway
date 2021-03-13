@@ -42,12 +42,6 @@ jobs:
           TF_VAR_kong_image: ${{ secrets.KONG_IMAGE }}
       - name: wait control plane
         run: while [[ $(kubectl -n kong-hybrid-cp get pods -l name=kong-enterprise-cp -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for pod" && sleep 1; done
-      - name: get pod
-        run: kubectl get pods -n kong-hybrid-cp -l name=kong-enterprise-cp 
-      - name: describe pod
-        run: kubectl describe pod -n kong-hybrid-cp -l name=kong-enterprise-cp
-      - name: pod logs
-        run: kubectl logs -n kong-hybrid-cp -l name=kong-enterprise-cp
       - name: Verify
         run: kitchen verify default
       - name: Kitchen Destroy
