@@ -9,16 +9,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - uses: actions/setup-ruby@v1
+        with:
+          ruby-version: '2.7.2'
       - name: Setup Minikube
         uses: manusa/actions-setup-minikube@v2.3.0
         with:
           minikube version: 'v1.18.1'
           kubernetes version: 'v1.20.2'
           github token: ${{ secrets.GITHUB_TOKEN }}
-      - name: write docker config
+      - name: wait
+        run: while [[ $(kubectl -n kube-system get pods -l k8s-app=kube-dns -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for pod" && sleep 1; done
+      - name: write config
         run: |
-          out=$(pwd)
-          echo $out
+          gem install bundler --user
+          bundle install
           mkdir -p .ci/docker
           cp -r /home/runner/work/_temp/.minikube/ .ci/
           cp -r /home/runner/.kube .ci/
@@ -29,18 +34,12 @@ jobs:
           cat << EOF > .ci/kong_license
           ${{ secrets.KONG_LICENSE_FILE }}
           EOF
-          cat .ci/.kube/config
           cp examples/hybrid_internal/terraform.tfvars.example examples/hybrid_internal/terraform.tfvars
           sed -i 's-~/.kube/config-/github/workspace/.ci/.kube/config-g' examples/hybrid_internal/terraform.tfvars
           sed -i 's-~/.docker/config.json-/github/workspace/.ci/docker/config.json-g' examples/hybrid_internal/terraform.tfvars
           sed -i 's-~/.kong_license-/github/workspace/.ci/kong_license-g' examples/hybrid_internal/terraform.tfvars
-      - name: wait
-        run: while [[ $(kubectl -n kube-system get pods -l k8s-app=kube-dns -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for pod" && sleep 1; done
       - name: Kitchen Test
-        uses: dwp/github-action-kitchen-terraform@0.14.7
-        with:
-          kitchen-command: test default --destroy=always
-          aws-account-number: "REDECTED"
+        run: test default --destroy=always
         env:
           TF_VAR_super_admin_password: ${{ secrets.SUPER_ADMIN_PASSWORD }}
           TF_VAR_kong_database_password: ${{ secrets.KONG_DATABASE_PASSWORD }}
