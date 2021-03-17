@@ -72,3 +72,23 @@ kong_data_plane_config = {
   "KONG_SSL_CERT"                    = "/etc/secrets/kong-proxy/tls.crt",
   "KONG_SSL_CERT_KEY"                = "/etc/secrets/kong-proxy/tls.key",
 }
+
+#dp_lb_svcs = {
+#  "kong-proxy" = {
+#    namespace                   = "kong-hybrid-dp"
+#    load_balancer_source_ranges = ["0.0.0.0/0"]
+#    annotations = {
+#      "service.beta.kubernetes.io/aws-load-balancer-backend-protocol" = "http",
+#      "service.beta.kubernetes.io/aws-load-balancer-ssl-cert"         = "<my-arn>",
+#      "service.beta.kubernetes.io/aws-load-balancer-ssl-ports"        = "kong-proxy-ssl",
+#      "service.beta.kubernetes.io/aws-load-balancer-security-groups"  = "<aws-security-group>"
+#    }
+#    ports = {
+#      "kong-proxy-ssl" = {
+#        port        = 8443
+#        protocol    = "TCP"
+#        target_port = 8000
+#      }
+#    }
+#  }
+#}

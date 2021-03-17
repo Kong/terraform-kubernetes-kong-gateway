@@ -123,7 +123,8 @@ variable "tls_services" {
 variable "dp_svcs" {
   description = "A map of objects that are used to create clusterIP services to expose Kong endpoints"
   type = map(object({
-    namespace = string
+    namespace   = string
+    annotations = map(string)
     ports = map(object({
       port        = number
       protocol    = string
@@ -138,6 +139,7 @@ variable "dp_lb_svcs" {
   type = map(object({
     namespace                   = string
     load_balancer_source_ranges = list(string)
+    annotations                 = map(string)
     ports = map(object({
       port        = number
       protocol    = string
@@ -148,6 +150,7 @@ variable "dp_lb_svcs" {
     "kong-proxy" = {
       namespace                   = "kong-hybrid-dp"
       load_balancer_source_ranges = ["0.0.0.0/0"]
+      annotations                 = {}
       ports = {
         "kong-proxy" = {
           port        = 8000
@@ -169,6 +172,7 @@ variable "cp_lb_svcs" {
   type = map(object({
     namespace                   = string
     load_balancer_source_ranges = list(string)
+    annotations                 = map(string)
     ports = map(object({
       port        = number
       protocol    = string
@@ -179,6 +183,7 @@ variable "cp_lb_svcs" {
     "kong-api-man" = {
       namespace                   = "kong-hybrid-cp"
       load_balancer_source_ranges = ["0.0.0.0/0"]
+      annotations                 = {}
       ports = {
         "kong-admin" = {
           port        = 8001
@@ -205,6 +210,7 @@ variable "cp_lb_svcs" {
     "kong-portal" = {
       namespace                   = "kong-hybrid-cp"
       load_balancer_source_ranges = ["0.0.0.0/0"]
+      annotations                 = {}
       ports = {
         "kong-portal-admin" = {
           port        = 8004
@@ -234,7 +240,8 @@ variable "cp_lb_svcs" {
 variable "cp_svcs" {
   description = "A map of objects that are used to create clusterIP services to expose Kong endpoints"
   type = map(object({
-    namespace = string
+    namespace   = string
+    annotations = map(string)
     ports = map(object({
       port        = number
       protocol    = string
@@ -243,7 +250,8 @@ variable "cp_svcs" {
   }))
   default = {
     "kong-cluster" = {
-      namespace = "kong-hybrid-cp"
+      namespace   = "kong-hybrid-cp"
+      annotations = {}
       ports = {
         "kong-cluster" = {
           port        = 8005

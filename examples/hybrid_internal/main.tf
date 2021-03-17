@@ -58,20 +58,14 @@ locals {
   cp_ns = kubernetes_namespace.kong["kong-hybrid-cp"].metadata[0].name
   dp_ns = kubernetes_namespace.kong["kong-hybrid-dp"].metadata[0].name
 
-  proxy_ssl      = module.kong-dp.services["kong-proxy"]["kong-proxy-ssl"].endpoint
-  api_ssl        = module.kong-cp.services["kong-api-man"]["kong-admin-ssl"].endpoint
-  manager_ssl    = module.kong-cp.services["kong-api-man"]["kong-manager-ssl"].endpoint
-  portal_api_ssl = module.kong-cp.services["kong-portal"]["kong-portal-admin-ssl"].endpoint
-  portal_gui_ssl = module.kong-cp.services["kong-portal"]["kong-portal-gui-ssl"].endpoint
+  proxy        = var.proxy_url != "" ? var.proxy_url : module.kong-dp.proxy_endpoint
+  admin        = var.admin_url != "" ? var.admin_url : module.kong-cp.admin_endpoint
+  manager      = var.manager_url != "" ? var.manager_url : module.kong-cp.manager_endpoint
+  portal_admin = var.portal_admin_url != "" ? var.portal_admin_url : module.kong-cp.portal_admin_endpoint
+  portal_gui   = var.portal_gui_url != "" ? var.portal_gui_url : module.kong-cp.portal_gui_endpoint
 
-  proxy      = module.kong-dp.services["kong-proxy"]["kong-proxy"].endpoint
-  api        = module.kong-cp.services["kong-api-man"]["kong-admin"].endpoint
-  manager    = module.kong-cp.services["kong-api-man"]["kong-manager"].endpoint
-  portal_api = module.kong-cp.services["kong-portal"]["kong-portal-admin"].endpoint
-  portal_gui = module.kong-cp.services["kong-portal"]["kong-portal-gui"].endpoint
-
-  cluster   = module.kong-cp.services["kong-cluster"]["kong-cluster"].endpoint
-  telemetry = module.kong-cp.services["kong-cluster"]["kong-telemetry"].endpoint
+  cluster   = module.kong-cp.cluster_endpoint
+  telemetry = module.kong-cp.telemetry_endpoint
 
   kong_cp_deployment_name = "kong-enterprise-cp"
   kong_dp_deployment_name = "kong-enterprise-dp"

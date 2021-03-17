@@ -25,7 +25,6 @@ resource "kubernetes_secret" "license-cp" {
   }
 }
 
-
 resource "kubernetes_secret" "kong-enterprise-superuser-password" {
   metadata {
     name      = var.kong_superuser_secret_name
