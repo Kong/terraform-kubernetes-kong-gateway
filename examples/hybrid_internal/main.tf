@@ -58,11 +58,11 @@ locals {
   cp_ns = kubernetes_namespace.kong["kong-hybrid-cp"].metadata[0].name
   dp_ns = kubernetes_namespace.kong["kong-hybrid-dp"].metadata[0].name
 
-  proxy        = var.proxy_url != "" ? var.proxy_url : module.kong-dp.proxy_endpoint
-  admin        = var.admin_url != "" ? var.admin_url : module.kong-cp.admin_endpoint
-  manager      = var.manager_url != "" ? var.manager_url : module.kong-cp.manager_endpoint
-  portal_admin = var.portal_admin_url != "" ? var.portal_admin_url : module.kong-cp.portal_admin_endpoint
-  portal_gui   = var.portal_gui_url != "" ? var.portal_gui_url : module.kong-cp.portal_gui_endpoint
+  proxy        = module.kong-dp.proxy_endpoint
+  admin        = module.kong-cp.admin_endpoint
+  manager      = module.kong-cp.manager_endpoint
+  portal_admin = module.kong-cp.portal_admin_endpoint
+  portal_gui   = module.kong-cp.portal_gui_endpoint
 
   cluster   = module.kong-cp.cluster_endpoint
   telemetry = module.kong-cp.telemetry_endpoint

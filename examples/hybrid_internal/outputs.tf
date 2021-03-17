@@ -25,15 +25,15 @@ output "kong-proxy-endpoint" {
 }
 
 output "kong-api-endpoint-ip" {
-  value = local.admin != "" ? "http://${local.admin}" : null
+  value = "http://${module.kong-cp.admin_http_endpoint}"
 }
 
 output "kong-manager-endpoint-ip" {
-  value = local.manager != "" ? "http://${local.manager}" : null
+  value = "http://${module.kong-cp.manager_http_endpoint}"
 }
 
 output "kong-proxy-endpoint-ip" {
-  value = local.proxy != "" ? "http://${local.proxy}" : null
+  value = "http://${module.kong-dp.proxy_http_endpoint}"
 }
 
 output "kong-super-admin-token" {
