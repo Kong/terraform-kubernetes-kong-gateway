@@ -24,28 +24,16 @@ output "kong-proxy-endpoint" {
   value = "http://kong-proxy.kong-hybrid-dp.svc.cluster.local:8000"
 }
 
-output "kong-api-endpoint-ip-ssl" {
-  value = "https://${local.api_ssl}"
-}
-
-output "kong-manager-endpoint-ip-ssl" {
-  value = "https://${local.manager_ssl}"
-}
-
-output "kong-proxy-endpoint-ip-ssl" {
-  value = "https://${local.proxy_ssl}"
-}
-
 output "kong-api-endpoint-ip" {
-  value = "http://${local.api}"
+  value = "http://${module.kong-cp.admin_http_endpoint}"
 }
 
 output "kong-manager-endpoint-ip" {
-  value = "http://${local.manager}"
+  value = "http://${module.kong-cp.manager_http_endpoint}"
 }
 
 output "kong-proxy-endpoint-ip" {
-  value = "http://${local.proxy}"
+  value = "http://${module.kong-dp.proxy_http_endpoint}"
 }
 
 output "kong-super-admin-token" {

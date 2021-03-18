@@ -123,7 +123,8 @@ variable "tls_services" {
 variable "dp_svcs" {
   description = "A map of objects that are used to create clusterIP services to expose Kong endpoints"
   type = map(object({
-    namespace = string
+    namespace   = string
+    annotations = map(string)
     ports = map(object({
       port        = number
       protocol    = string
@@ -132,7 +133,8 @@ variable "dp_svcs" {
   }))
   default = {
     "kong-proxy" = {
-      namespace = "kong-hybrid-dp"
+      namespace   = "kong-hybrid-dp"
+      annotations = {}
       ports = {
         "kong-proxy" = {
           port        = 8000
@@ -153,6 +155,7 @@ variable "dp_lb_svcs" {
   description = "A map of objects that are used to create LoadBalancer services to expose Kong endpoints to outside of the cluster"
   type = map(object({
     namespace                   = string
+    annotations                 = map(string)
     load_balancer_source_ranges = list(string)
     ports = map(object({
       port        = number
@@ -168,6 +171,7 @@ variable "cp_lb_svcs" {
   type = map(object({
     namespace                   = string
     load_balancer_source_ranges = list(string)
+    annotations                 = map(string)
     ports = map(object({
       port        = number
       protocol    = string
@@ -180,7 +184,8 @@ variable "cp_lb_svcs" {
 variable "cp_svcs" {
   description = "A map of objects that are used to create clusterIP services to expose Kong endpoints"
   type = map(object({
-    namespace = string
+    namespace   = string
+    annotations = map(string)
     ports = map(object({
       port        = number
       protocol    = string
@@ -189,7 +194,8 @@ variable "cp_svcs" {
   }))
   default = {
     "kong-cluster" = {
-      namespace = "kong-hybrid-cp"
+      namespace   = "kong-hybrid-cp"
+      annotations = {}
       ports = {
         "kong-cluster" = {
           port        = 8005
@@ -204,7 +210,8 @@ variable "cp_svcs" {
       }
     }
     "kong-api-man" = {
-      namespace = "kong-hybrid-cp"
+      namespace   = "kong-hybrid-cp"
+      annotations = {}
       ports = {
         "kong-admin" = {
           port        = 8001
@@ -229,7 +236,8 @@ variable "cp_svcs" {
       }
     }
     "kong-portal" = {
-      namespace = "kong-hybrid-cp"
+      namespace   = "kong-hybrid-cp"
+      annotations = {}
       ports = {
         "kong-portal-admin" = {
           port        = 8004
@@ -307,4 +315,34 @@ variable "portal_config_secret_key" {
 variable "kong_superuser_secret_name" {
   description = "A string used as the name of the image pull kubernetes secret"
   default     = "kong-enterprise-superuser-password"
+}
+
+variable "proxy_url" {
+  description = "A string to override the proxy url"
+  type        = string
+  default     = ""
+}
+
+variable "admin_url" {
+  description = "A string to override the admin url"
+  type        = string
+  default     = ""
+}
+
+variable "manager_url" {
+  description = "A string to override the manager url"
+  type        = string
+  default     = ""
+}
+
+variable "portal_admin_url" {
+  description = "A string to override the portal admin api url"
+  type        = string
+  default     = ""
+}
+
+variable "portal_gui_url" {
+  description = "A string to override the portal gui url"
+  type        = string
+  default     = ""
 }

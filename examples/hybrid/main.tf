@@ -37,7 +37,7 @@ module "tls_cluster" {
   source                = "../shared_modules/tls"
   private_key_algorithm = var.tls_cluster.private_key_algorithm
   ca_common_name        = var.tls_cluster.ca_common_name
-  override_common_name  = var.tls_cluster.override_common_name # shared cluster mode needs specific common name
+  override_common_name  = var.tls_cluster.override_common_name
   namespaces            = var.tls_cluster.namespaces
   certificates          = var.tls_cluster.certificates
 }
@@ -51,27 +51,24 @@ module "tls_services" {
 
 locals {
 
-  dp_mounts = concat(module.tls_cluster.namespace_name_map[local.dp_ns])
+  dp_mounts = concat(module.tls_cluster.namespace_name_map[local.dp_ns],
+  module.tls_services.namespace_name_map[local.dp_ns])
   cp_mounts = concat(module.tls_cluster.namespace_name_map[local.cp_ns],
   module.tls_services.namespace_name_map[local.cp_ns])
+
+  services = concat(module.kong-cp.services, module.kong-dp.services)
 
   cp_ns = kubernetes_namespace.kong["kong-hybrid-cp"].metadata[0].name
   dp_ns = kubernetes_namespace.kong["kong-hybrid-dp"].metadata[0].name
 
-  proxy_ssl      = module.kong-dp.load_balancer_services["kong-proxy"]["kong-proxy-ssl"].endpoint
-  api_ssl        = module.kong-cp.load_balancer_services["kong-api-man"]["kong-admin-ssl"].endpoint
-  manager_ssl    = module.kong-cp.load_balancer_services["kong-api-man"]["kong-manager-ssl"].endpoint
-  portal_api_ssl = module.kong-cp.load_balancer_services["kong-portal"]["kong-portal-admin-ssl"].endpoint
-  portal_gui_ssl = module.kong-cp.load_balancer_services["kong-portal"]["kong-portal-gui-ssl"].endpoint
+  proxy        = module.kong-dp.proxy_endpoint
+  admin        = module.kong-cp.admin_endpoint
+  manager      = module.kong-cp.manager_endpoint
+  portal_admin = module.kong-cp.portal_admin_endpoint
+  portal_gui   = module.kong-cp.portal_gui_endpoint
 
-  proxy      = module.kong-dp.load_balancer_services["kong-proxy"]["kong-proxy"].endpoint
-  api        = module.kong-cp.load_balancer_services["kong-api-man"]["kong-admin"].endpoint
-  manager    = module.kong-cp.load_balancer_services["kong-api-man"]["kong-manager"].endpoint
-  portal_api = module.kong-cp.load_balancer_services["kong-portal"]["kong-portal-admin"].endpoint
-  portal_gui = module.kong-cp.load_balancer_services["kong-portal"]["kong-portal-gui"].endpoint
-
-  cluster   = module.kong-cp.services["kong-cluster"]["kong-cluster"].endpoint
-  telemetry = module.kong-cp.services["kong-cluster"]["kong-telemetry"].endpoint
+  cluster   = module.kong-cp.cluster_endpoint
+  telemetry = module.kong-cp.telemetry_endpoint
 
   kong_cp_deployment_name = "kong-enterprise-cp"
   kong_dp_deployment_name = "kong-enterprise-dp"
@@ -143,16 +140,11 @@ locals {
   # Merge static control plane configuration
   # with dynamic service address values
   #
-  kong_cp_merge_config = {
-    "KONG_ADMIN_GUI_URL"   = "https://${local.manager_ssl}",
-    "KONG_ADMIN_API_URI"   = "https://${local.api_ssl}",
-    "KONG_PORTAL_API_URL"  = "https://${local.portal_api_ssl}",
-    "KONG_PORTAL_GUI_HOST" = local.portal_gui_ssl,
-    "KONG_PG_HOST"         = module.postgres.connection.ip,
-    "KONG_PG_PORT"         = module.postgres.connection.port,
-  }
 
-  kong_cp_config = merge(var.kong_control_plane_config, local.kong_cp_merge_config)
+  pg_host = lookup(var.kong_control_plane_config, "KONG_PG_HOST", "") == "" ? { "KONG_PG_HOST" = module.postgres.connection.ip } : {}
+  pg_port = lookup(var.kong_control_plane_config, "KONG_PG_PORT", "") == "" ? { "KONG_PG_PORT" = module.postgres.connection.port } : {}
+
+  kong_cp_config = merge(var.kong_control_plane_config, local.pg_host, local.pg_port)
 
   #
   # Data plane configuration 
@@ -169,8 +161,6 @@ locals {
   # with dynamic service address values.
   # currently no dynamic values for data plane
   #
-  kong_dp_merge_config = {}
-  kong_dp_config       = merge(var.kong_data_plane_config, local.kong_dp_merge_config)
 
 }
 
@@ -197,7 +187,7 @@ module "kong-dp" {
   deployment_name        = local.kong_dp_deployment_name
   namespace              = local.dp_ns
   deployment_replicas    = var.data_plane_replicas
-  config                 = local.kong_dp_config
+  config                 = var.kong_data_plane_config
   secret_config          = local.kong_dp_secret_config
   kong_image             = local.kong_image
   image_pull_secrets     = local.kong_image_pull_secrets

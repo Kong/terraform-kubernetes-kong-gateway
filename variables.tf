@@ -48,11 +48,44 @@ variable "image_pull_secrets" {
   ]
 }
 
+variable "service_name_map" {
+  description = "A map of service to serivce names, used to construct the endpoint output for each service"
+  type = object({
+    kong_proxy            = string
+    kong_proxy_ssl        = string
+    kong_admin            = string
+    kong_admin_ssl        = string
+    kong_manager          = string
+    kong_manager_ssl      = string
+    kong_portal_admin     = string
+    kong_portal_admin_ssl = string
+    kong_portal_gui       = string
+    kong_portal_gui_ssl   = string
+    kong_cluster          = string
+    kong_telemetry        = string
+  })
+  default = {
+    kong_proxy            = "kong-proxy"
+    kong_proxy_ssl        = "kong-proxy-ssl"
+    kong_admin            = "kong-admin"
+    kong_admin_ssl        = "kong-admin-ssl"
+    kong_manager          = "kong-manager"
+    kong_manager_ssl      = "kong-manager-ssl"
+    kong_portal_admin     = "kong-portal-admin"
+    kong_portal_admin_ssl = "kong-portal-admin-ssl"
+    kong_portal_gui       = "kong-portal-gui"
+    kong_portal_gui_ssl   = "kong-portal-gui-ssl"
+    kong_cluster          = "kong-cluster"
+    kong_telemetry        = "kong-telemetry"
+  }
+}
+
 variable "load_balancer_services" {
   description = "A map that represent the kong services to expose as a LoadBalancer service in the cluster"
   type = map(object({
     namespace                   = string
     load_balancer_source_ranges = list(string)
+    annotations                 = map(string)
     ports = map(object({
       port        = number
       protocol    = string
@@ -65,7 +98,8 @@ variable "load_balancer_services" {
 variable "services" {
   description = "A map that represent the kong services to create in the cluster"
   type = map(object({
-    namespace = string
+    namespace   = string
+    annotations = map(string)
     ports = map(object({
       port        = number
       protocol    = string
