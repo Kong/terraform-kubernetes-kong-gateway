@@ -86,6 +86,8 @@ variable "load_balancer_services" {
     namespace                   = string
     load_balancer_source_ranges = list(string)
     annotations                 = map(string)
+    external_traffic_policy     = string
+    health_check_node_port      = number
     ports = map(object({
       port        = number
       protocol    = string

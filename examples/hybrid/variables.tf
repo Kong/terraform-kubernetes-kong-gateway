@@ -140,6 +140,8 @@ variable "dp_lb_svcs" {
     namespace                   = string
     load_balancer_source_ranges = list(string)
     annotations                 = map(string)
+    external_traffic_policy     = string
+    health_check_node_port      = number
     ports = map(object({
       port        = number
       protocol    = string
@@ -151,6 +153,8 @@ variable "dp_lb_svcs" {
       namespace                   = "kong-hybrid-dp"
       load_balancer_source_ranges = ["0.0.0.0/0"]
       annotations                 = {}
+      external_traffic_policy     = "Cluster"
+      health_check_node_port      = null
       ports = {
         "kong-proxy" = {
           port        = 8000
@@ -173,6 +177,8 @@ variable "cp_lb_svcs" {
     namespace                   = string
     load_balancer_source_ranges = list(string)
     annotations                 = map(string)
+    external_traffic_policy     = string
+    health_check_node_port      = number
     ports = map(object({
       port        = number
       protocol    = string
@@ -184,6 +190,8 @@ variable "cp_lb_svcs" {
       namespace                   = "kong-hybrid-cp"
       load_balancer_source_ranges = ["0.0.0.0/0"]
       annotations                 = {}
+      external_traffic_policy     = "Cluster"
+      health_check_node_port      = null
       ports = {
         "kong-admin" = {
           port        = 8001
@@ -211,6 +219,8 @@ variable "cp_lb_svcs" {
       namespace                   = "kong-hybrid-cp"
       load_balancer_source_ranges = ["0.0.0.0/0"]
       annotations                 = {}
+      external_traffic_policy     = "Cluster"
+      health_check_node_port      = null
       ports = {
         "kong-portal-admin" = {
           port        = 8004
