@@ -157,6 +157,8 @@ variable "dp_lb_svcs" {
     namespace                   = string
     annotations                 = map(string)
     load_balancer_source_ranges = list(string)
+    external_traffic_policy     = string
+    health_check_node_port      = number
     ports = map(object({
       port        = number
       protocol    = string
@@ -172,6 +174,8 @@ variable "cp_lb_svcs" {
     namespace                   = string
     load_balancer_source_ranges = list(string)
     annotations                 = map(string)
+    external_traffic_policy     = string
+    health_check_node_port      = number
     ports = map(object({
       port        = number
       protocol    = string

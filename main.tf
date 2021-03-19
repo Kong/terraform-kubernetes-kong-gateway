@@ -54,6 +54,8 @@ resource "kubernetes_service" "this-load-balancer-service" {
   spec {
     type                        = "LoadBalancer"
     load_balancer_source_ranges = each.value.load_balancer_source_ranges
+    external_traffic_policy     = each.value.external_traffic_policy
+    health_check_node_port      = each.value.external_traffic_policy == "Local" ? each.value.health_check_node_port : null
     dynamic "port" {
       for_each = each.value.ports
       content {
