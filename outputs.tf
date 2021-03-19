@@ -108,7 +108,7 @@ locals {
 
 
   proxy        = lookup(var.config, "KONG_PROXY_URL", "") != "" ? lookup(var.config, "KONG_PROXY_URL", "") : local.proxy_ssl != "" ? "https://${local.proxy_ssl}" : "http://${local.proxy_http}"
-  admin        = lookup(var.config, "KONG_ADMIN_API_URL", "") != "" ? lookup(var.config, "KONG_ADMIN_API_URL", "") : local.admin_ssl != "" ? "https://${local.admin_ssl}" : "http://${local.admin_http}"
+  admin        = lookup(var.config, "KONG_ADMIN_API_URI", "") != "" ? lookup(var.config, "KONG_ADMIN_API_URI", "") : local.admin_ssl != "" ? "https://${local.admin_ssl}" : "http://${local.admin_http}"
   manager      = lookup(var.config, "KONG_ADMIN_GUI_URL", "") != "" ? lookup(var.config, "KONG_ADMIN_GUI_URL", "") : local.manager_ssl != "" ? "https://${local.manager_ssl}" : "http://${local.manager_http}"
   portal_admin = lookup(var.config, "KONG_PORTAL_API_URL", "") != "" ? lookup(var.config, "KONG_PORTAL_API_URL", "") : local.portal_admin_ssl != "" ? "https://${local.portal_admin_ssl}" : "http://${local.portal_admin_http}"
   portal_gui   = lookup(var.config, "KONG_PORTAL_GUI_HOST", "") != "" ? lookup(var.config, "KONG_PORTAL_GUI_HOST", "") : local.portal_gui_ssl != "" ? local.portal_gui_ssl : local.portal_gui_http

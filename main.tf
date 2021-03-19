@@ -1,6 +1,6 @@
 locals {
   admin_gui_map  = lookup(var.config, "KONG_ADMIN_GUI_URL", "") == "" ? { "KONG_ADMIN_GUI_URL" = local.manager } : {}
-  admin_api_map  = lookup(var.config, "KONG_ADMIN_API_URL", "") == "" ? { "KONG_ADMIN_API_URL" = local.admin } : {}
+  admin_api_map  = lookup(var.config, "KONG_ADMIN_API_URI", "") == "" ? { "KONG_ADMIN_API_URI" = local.admin } : {}
   portal_api_map = lookup(var.config, "KONG_PORTAL_API_URL", "") == "" ? { "KONG_PORTAL_URL" = local.portal_admin } : {}
   portal_gui_map = lookup(var.config, "KONG_PORTAL_GUI_HOST", "") == "" ? { "KONG_PORTAL_GUI_HOST" = local.portal_gui } : {}
   proxy_map      = lookup(var.config, "KONG_PROXY_URL", "") == "" ? { "KONG_PROXY_URL" = local.proxy } : {}
