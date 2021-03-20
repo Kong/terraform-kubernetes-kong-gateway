@@ -24,9 +24,9 @@ locals {
       }
     }
   }
-  tmp_services = merge(local.cluster_ip_services, local.load_balancer_services)
+  service_map = merge(local.cluster_ip_services, local.load_balancer_services)
   services = flatten([
-    for k, v in local.tmp_services :
+    for k, v in local.service_map :
     [
       for x, y in v :
       y
@@ -200,4 +200,8 @@ output "cluster_endpoint" {
 
 output "telemetry_endpoint" {
   value = local.telemetry
+}
+
+output "service_map" {
+  value = local.service_map
 }
