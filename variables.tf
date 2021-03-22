@@ -166,3 +166,9 @@ variable "service_selector" {
   type        = string
   default     = "kong"
 }
+
+variable "deployment_annotations" {
+  description = "A map of annotation to apply to this deployment"
+  type        = map(string)
+  default     = {}
+}

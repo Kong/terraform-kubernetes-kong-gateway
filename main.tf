@@ -124,6 +124,7 @@ resource "kubernetes_deployment" "this-kong-deployment" {
     replicas = var.deployment_replicas
     template {
       metadata {
+        annotations = var.deployment_annotations
         labels = {
           name = var.deployment_name
           app  = var.deployment_name
