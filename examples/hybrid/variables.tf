@@ -66,6 +66,7 @@ variable "tls_cluster" {
         common_name  = null
         namespaces   = ["kong-hybrid-cp", "kong-hybrid-dp"]
         allowed_uses = null
+        dns_names    = null
       }
     }
   }
@@ -83,6 +84,7 @@ variable "tls_services" {
           "key_encipherment",
           "digital_signature",
         ]
+        dns_names = null
       },
       "kong-admin-gui" = {
         common_name = null
@@ -91,6 +93,7 @@ variable "tls_services" {
           "key_encipherment",
           "digital_signature",
         ]
+        dns_names = null
       },
       "kong-portal-gui" = {
         common_name = null
@@ -99,6 +102,7 @@ variable "tls_services" {
           "key_encipherment",
           "digital_signature",
         ]
+        dns_names = null
       }
       "kong-portal-api" = {
         common_name = null
@@ -107,6 +111,7 @@ variable "tls_services" {
           "key_encipherment",
           "digital_signature",
         ]
+        dns_names = null
       },
       "kong-proxy" = {
         common_name = null
@@ -115,10 +120,20 @@ variable "tls_services" {
           "key_encipherment",
           "digital_signature",
         ]
+        dns_names = null
       }
     }
   }
 }
+
+variable "tls_ingress" {
+  default = {
+    ca_common_name = null
+    namespaces     = []
+    certificates   = {}
+  }
+}
+
 
 variable "dp_svcs" {
   description = "A map of objects that are used to create clusterIP services to expose Kong endpoints"

@@ -43,5 +43,6 @@ variable "certificates" {
     namespaces   = list(string)
     common_name  = string
     allowed_uses = list(string)
+    dns_names    = list(string)
   }))
 }

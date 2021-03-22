@@ -37,7 +37,7 @@ module "tls_cluster" {
   source                = "../shared_modules/tls"
   private_key_algorithm = var.tls_cluster.private_key_algorithm
   ca_common_name        = var.tls_cluster.ca_common_name
-  override_common_name  = var.tls_cluster.override_common_name # shared cluster mode needs specific common name
+  override_common_name  = var.tls_cluster.override_common_name
   namespaces            = var.tls_cluster.namespaces
   certificates          = var.tls_cluster.certificates
 }
@@ -47,6 +47,13 @@ module "tls_services" {
   ca_common_name = var.tls_services.ca_common_name
   namespaces     = var.tls_services.namespaces
   certificates   = var.tls_services.certificates
+}
+
+module "tls_ingress" {
+  source         = "../shared_modules/tls"
+  ca_common_name = var.tls_ingress.ca_common_name
+  namespaces     = var.tls_ingress.namespaces
+  certificates   = var.tls_ingress.certificates
 }
 
 locals {
@@ -178,6 +185,7 @@ module "kong-cp" {
   volume_secrets         = local.kong_cp_volume_secrets
   services               = var.cp_svcs
   load_balancer_services = var.cp_lb_svcs
+  ingress                = var.cp_ingress
   depends_on             = [kubernetes_namespace.kong]
 }
 
@@ -195,5 +203,6 @@ module "kong-dp" {
   volume_secrets         = local.kong_dp_volume_secrets
   services               = var.dp_svcs
   load_balancer_services = var.dp_lb_svcs
+  ingress                = var.dp_ingress
   depends_on             = [kubernetes_namespace.kong]
 }

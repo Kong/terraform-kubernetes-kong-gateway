@@ -5,7 +5,7 @@ locals {
       for port in svc.spec.0.port :
       port.name => {
         endpoint = "${svc.spec.0.cluster_ip}:${port.port}"
-        port     = svc.spec.0.port.0.port
+        port     = port.port
         ip       = svc.spec.0.cluster_ip
         name     = port.name
       }
@@ -24,9 +24,24 @@ locals {
       }
     }
   }
-  service_map = merge(local.cluster_ip_services, local.load_balancer_services)
+
+  ingress = kubernetes_ingress.this-ingress
+
+  tmp_map = merge(local.cluster_ip_services, local.load_balancer_services)
+
+  service_map = merge(flatten([
+    for k, v in local.tmp_map :
+    [
+      for x in keys(v) :
+      {
+        (x) = v[x]
+      }
+    ]
+  ])...)
+
+
   services = flatten([
-    for k, v in local.service_map :
+    for k, v in local.tmp_map :
     [
       for x, y in v :
       y
@@ -204,4 +219,8 @@ output "telemetry_endpoint" {
 
 output "service_map" {
   value = local.service_map
+}
+
+output "ingress" {
+  value = local.ingress
 }

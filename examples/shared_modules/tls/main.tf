@@ -47,6 +47,8 @@ resource "tls_cert_request" "this-cert-request" {
   key_algorithm   = tls_private_key.this-key[each.key].algorithm
   private_key_pem = tls_private_key.this-key[each.key].private_key_pem
 
+  dns_names = each.value.dns_names
+
   subject {
     common_name  = lookup(each.value, "common_name", null) != null ? each.value.common_name : var.override_common_name != null ? var.override_common_name : each.key
     organization = var.organization
