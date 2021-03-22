@@ -66,6 +66,7 @@ variable "tls_cluster" {
         common_name  = null
         namespaces   = ["kong-hybrid-cp", "kong-hybrid-dp"]
         allowed_uses = null
+        dns_names    = null
       }
     }
   }
@@ -83,6 +84,7 @@ variable "tls_services" {
           "key_encipherment",
           "digital_signature",
         ]
+        dns_names = null
       },
       "kong-admin-gui" = {
         common_name = "kong-admin-gui.kong-hybrid-cp.svc.cluster.local"
@@ -91,6 +93,7 @@ variable "tls_services" {
           "key_encipherment",
           "digital_signature",
         ]
+        dns_names = null
       },
       "kong-portal-gui" = {
         common_name = "kong-portal-gui.kong-hybrid-cp.svc.cluster.local"
@@ -99,6 +102,7 @@ variable "tls_services" {
           "key_encipherment",
           "digital_signature",
         ]
+        dns_names = null
       }
       "kong-portal-api" = {
         common_name = "kong-portal-api.kong-hybrid-cp.svc.cluster.local"
@@ -107,6 +111,7 @@ variable "tls_services" {
           "key_encipherment",
           "digital_signature",
         ]
+        dns_names = null
       },
       "kong-proxy" = {
         common_name = "kong-proxy.kong-hybrid-cp.svc.cluster.local"
@@ -115,8 +120,17 @@ variable "tls_services" {
           "key_encipherment",
           "digital_signature",
         ]
+        dns_names = null
       }
     }
+  }
+}
+
+variable "tls_ingress" {
+  default = {
+    ca_common_name = null
+    namespaces     = []
+    certificates   = {}
   }
 }
 
@@ -180,6 +194,46 @@ variable "cp_lb_svcs" {
       port        = number
       protocol    = string
       target_port = number
+    }))
+  }))
+  default = {}
+}
+
+variable "cp_ingress" {
+  description = "A map that represents kubernetes ingress resources"
+  type = map(object({
+    namespace   = string
+    annotations = map(string)
+    tls = object({
+      hosts       = list(string)
+      secret_name = string
+    })
+    rules = map(object({
+      host = string
+      paths = map(object({
+        service_name = string
+        service_port = number
+      }))
+    }))
+  }))
+  default = {}
+}
+
+variable "dp_ingress" {
+  description = "A map that represents kubernetes ingress resources"
+  type = map(object({
+    namespace   = string
+    annotations = map(string)
+    tls = object({
+      hosts       = list(string)
+      secret_name = string
+    })
+    rules = map(object({
+      host = string
+      paths = map(object({
+        service_name = string
+        service_port = number
+      }))
     }))
   }))
   default = {}

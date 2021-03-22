@@ -15,6 +15,44 @@ locals {
   )
 
 }
+
+# optional: this module can create cluster services for you
+# if you pass it a list of service objects. see variables for
+# details
+resource "kubernetes_ingress" "this-ingress" {
+  for_each               = var.ingress
+  wait_for_load_balancer = true
+  metadata {
+    name        = each.key
+    namespace   = each.value.namespace
+    annotations = each.value.annotations
+  }
+  spec {
+    tls {
+      hosts       = each.value.tls.hosts
+      secret_name = each.value.tls.secret_name
+    }
+    dynamic "rule" {
+      for_each = each.value.rules
+      content {
+        host = rule.value.host
+        http {
+          dynamic "path" {
+            for_each = rule.value.paths
+            content {
+              path = path.key
+              backend {
+                service_name = path.value.service_name
+                service_port = path.value.service_port
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 # optional: this module can create cluster services for you
 # if you pass it a list of service objects. see variables for
 # details

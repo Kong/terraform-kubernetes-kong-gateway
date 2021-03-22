@@ -80,6 +80,26 @@ variable "service_name_map" {
   }
 }
 
+variable "ingress" {
+  description = "A map that represents kubernetes ingress resources"
+  type = map(object({
+    namespace   = string
+    annotations = map(string)
+    tls = object({
+      hosts       = list(string)
+      secret_name = string
+    })
+    rules = map(object({
+      host = string
+      paths = map(object({
+        service_name = string
+        service_port = number
+      }))
+    }))
+  }))
+  default = {}
+}
+
 variable "load_balancer_services" {
   description = "A map that represent the kong services to expose as a LoadBalancer service in the cluster"
   type = map(object({

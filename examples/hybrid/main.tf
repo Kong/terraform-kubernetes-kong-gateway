@@ -49,6 +49,13 @@ module "tls_services" {
   certificates   = var.tls_services.certificates
 }
 
+module "tls_ingress" {
+  source         = "../shared_modules/tls"
+  ca_common_name = var.tls_ingress.ca_common_name
+  namespaces     = var.tls_ingress.namespaces
+  certificates   = var.tls_ingress.certificates
+}
+
 locals {
 
   dp_mounts = concat(module.tls_cluster.namespace_name_map[local.dp_ns],

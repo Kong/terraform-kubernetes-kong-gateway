@@ -76,3 +76,122 @@ kong_data_plane_config = {
   "KONG_SSL_CERT"                    = "/etc/secrets/kong-proxy/tls.crt",
   "KONG_SSL_CERT_KEY"                = "/etc/secrets/kong-proxy/tls.key",
 }
+
+# Enable ingress below
+#cp_ingress = {
+#  "control-plane-ingress" = {
+#    namespace = "kong-hybrid-cp"
+#    annotations = {
+#      "nginx.ingress.kubernetes.io/backend-protocol" = "HTTPS"
+#    }
+#    tls = {
+#      hosts = [
+#        "kong-control-plane.lan.local",
+#        "kong-manager.lan.local",
+#        "kong-admin.lan.local",
+#        "kong-portal-gui.lan.local",
+#        "kong-portal-admin.lan.local"
+#      ]
+#      secret_name = "kong-control-plane"
+#    }
+#    rules = {
+#      "kong-manager" = {
+#        host = "kong-manager.lan.local"
+#        paths = {
+#          "/" = {
+#            service_name = "kong-api-man"
+#            service_port = 8445
+#          }
+#        }
+#      },
+#      "kong-admin" = {
+#        host = "kong-admin.lan.local"
+#        paths = {
+#          "/" = {
+#            service_name = "kong-api-man"
+#            service_port = 8444
+#          }
+#        }
+#      },
+#      "kong-portal-gui" = {
+#        host = "kong-portal-gui.lan.local"
+#        paths = {
+#          "/" = {
+#            service_name = "kong-portal"
+#            service_port = 8446
+#          }
+#        }
+#      },
+#      "kong-portal-admin" = {
+#        host = "kong-portal-admin.lan.local"
+#        paths = {
+#          "/" = {
+#            service_name = "kong-portal"
+#            service_port = 8447
+#          }
+#        }
+#      }
+#    }
+#  }
+#}
+#
+#dp_ingress = {
+#  "data-plane-ingress" = {
+#    namespace = "kong-hybrid-dp"
+#    annotations = {
+#      "nginx.ingress.kubernetes.io/backend-protocol" = "HTTPS"
+#    }
+#    tls = {
+#      hosts = [
+#        "kong-data-plane.lan.local",
+#        "kong-proxy.lan.local"
+#      ]
+#      secret_name = "kong-data-plane"
+#    }
+#    rules = {
+#      "kong-proxy" = {
+#        host = "kong-proxy.lan.local"
+#        paths = {
+#          "/" = {
+#            service_name = "kong-proxy"
+#            service_port = 8443
+#          }
+#        }
+#      }
+#    }
+#  }
+#}
+
+#tls_ingress = {
+#  default = {
+#    ca_common_name = "kong-ingress-ca"
+#    namespaces     = ["kong-hybrid-cp", "kong-hybrid-dp"]
+#    certificates = {
+#      "kong-control-plane" = {
+#        common_name = "kong-control-plane.lan.local"
+#        namespaces  = ["kong-hybrid-cp"]
+#        allowed_uses = [
+#          "key_encipherment",
+#          "digital_signature",
+#        ]
+#        dns_names = [
+#          "kong-manager.lan.local",
+#          "kong-admin.lan.local",
+#          "kong-portal-gui.lan.local",
+#          "kong-portal-admin.lan.local"
+#        ]
+#      },
+#      "kong-data-plane" = {
+#        common_name = "kong-data-plane.lan.local"
+#        namespaces  = ["kong-hybrid-dp"]
+#        allowed_uses = [
+#          "key_encipherment",
+#          "digital_signature",
+#        ]
+#        dns_names = [
+#          "kong-proxy.lan.local"
+#        ]
+#      }
+#    }
+#  }
+#}
