@@ -13,6 +13,8 @@ locals {
     local.admin_api_map,
     local.portal_api_map,
     local.portal_gui_map,
+    local.portal_gui_url_map,
+    local.portal_gui_protocol,
     local.proxy_map,
   )
 
