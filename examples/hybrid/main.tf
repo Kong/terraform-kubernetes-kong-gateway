@@ -1,4 +1,4 @@
-###########################################################
+##########################################################
 # Some prerequs for running the example:
 #  a kubernetes cluster (minikube/eks) and a
 #  ~/.kube/config file that enables connectivity to it
@@ -20,7 +20,7 @@ provider "kubernetes" {
 resource "kubernetes_namespace" "kong" {
   for_each = var.namespaces
   metadata {
-    name = each.value["name"]
+    name = terraform.workspace == "default" ? each.value : "${each.value}-${terraform.workspace}"
   }
 }
 
@@ -39,6 +39,7 @@ module "tls_cluster" {
   ca_common_name        = var.tls_cluster.ca_common_name
   override_common_name  = var.tls_cluster.override_common_name
   namespaces            = var.tls_cluster.namespaces
+  namespace_map         = local.namespace_map
   certificates          = var.tls_cluster.certificates
 }
 
@@ -46,6 +47,7 @@ module "tls_services" {
   source         = "../shared_modules/tls"
   ca_common_name = var.tls_services.ca_common_name
   namespaces     = var.tls_services.namespaces
+  namespace_map  = local.namespace_map
   certificates   = var.tls_services.certificates
 }
 
@@ -53,20 +55,24 @@ module "tls_ingress" {
   source         = "../shared_modules/tls"
   ca_common_name = var.tls_ingress.ca_common_name
   namespaces     = var.tls_ingress.namespaces
+  namespace_map  = local.namespace_map
   certificates   = var.tls_ingress.certificates
 }
 
 locals {
+  # setting up some locals to shorten variable names
+  cp_ns      = kubernetes_namespace.kong["control_plane"].metadata[0].name
+  dp_ns      = kubernetes_namespace.kong["data_plane"].metadata[0].name
+  namespaces = [local.cp_ns, local.dp_ns]
+  namespace_map = {
+    "control_plane" = kubernetes_namespace.kong["control_plane"].metadata[0].name
+    "data_plane"    = kubernetes_namespace.kong["data_plane"].metadata[0].name
+  }
 
-  dp_mounts = concat(module.tls_cluster.namespace_name_map[local.dp_ns],
-  module.tls_services.namespace_name_map[local.dp_ns])
-  cp_mounts = concat(module.tls_cluster.namespace_name_map[local.cp_ns],
-  module.tls_services.namespace_name_map[local.cp_ns])
-
-  services = concat(module.kong-cp.services, module.kong-dp.services)
-
-  cp_ns = kubernetes_namespace.kong["kong-hybrid-cp"].metadata[0].name
-  dp_ns = kubernetes_namespace.kong["kong-hybrid-dp"].metadata[0].name
+  dp_mounts = concat(module.tls_cluster.namespace_name_map["data_plane"],
+  module.tls_services.namespace_name_map["data_plane"])
+  cp_mounts = concat(module.tls_cluster.namespace_name_map["control_plane"],
+  module.tls_services.namespace_name_map["control_plane"])
 
   proxy        = module.kong-dp.proxy_endpoint
   admin        = module.kong-cp.admin_endpoint
@@ -77,8 +83,8 @@ locals {
   cluster   = module.kong-cp.cluster_endpoint
   telemetry = module.kong-cp.telemetry_endpoint
 
-  kong_cp_deployment_name = "kong-enterprise-cp"
-  kong_dp_deployment_name = "kong-enterprise-dp"
+  kong_cp_deployment_name = local.cp_ns
+  kong_dp_deployment_name = local.dp_ns
   kong_image              = var.kong_image
 
   kong_image_pull_secrets = [
@@ -147,11 +153,12 @@ locals {
   # Merge static control plane configuration
   # with dynamic service address values
   #
+  kong_cp_merge_config = {
+    "KONG_PG_HOST" = module.postgres.connection.ip
+    "KONG_PG_PORT" = module.postgres.connection.port
+  }
 
-  pg_host = lookup(var.kong_control_plane_config, "KONG_PG_HOST", "") == "" ? { "KONG_PG_HOST" = module.postgres.connection.ip } : {}
-  pg_port = lookup(var.kong_control_plane_config, "KONG_PG_PORT", "") == "" ? { "KONG_PG_PORT" = module.postgres.connection.port } : {}
-
-  kong_cp_config = merge(var.kong_control_plane_config, local.pg_host, local.pg_port)
+  kong_cp_config = merge(var.kong_control_plane_config, local.kong_cp_merge_config)
 
   #
   # Data plane configuration 
@@ -168,6 +175,11 @@ locals {
   # with dynamic service address values.
   # currently no dynamic values for data plane
   #
+  kong_dp_merge_config = {
+    "KONG_CLUSTER_CONTROL_PLANE"      = "kong-cluster.${local.namespace_map["control_plane"]}.svc.cluster.local:8005",
+    "KONG_CLUSTER_TELEMETRY_ENDPOINT" = "kong-cluster.${local.namespace_map["control_plane"]}.svc.cluster.local:8006"
+  }
+  kong_dp_config = merge(var.kong_data_plane_config, local.kong_dp_merge_config)
 
 }
 
@@ -185,6 +197,7 @@ module "kong-cp" {
   volume_secrets         = local.kong_cp_volume_secrets
   services               = var.cp_svcs
   load_balancer_services = var.cp_lb_svcs
+  ingress                = var.cp_ingress
   depends_on             = [kubernetes_namespace.kong]
 }
 
@@ -194,7 +207,7 @@ module "kong-dp" {
   deployment_name        = local.kong_dp_deployment_name
   namespace              = local.dp_ns
   deployment_replicas    = var.data_plane_replicas
-  config                 = var.kong_data_plane_config
+  config                 = local.kong_dp_config
   secret_config          = local.kong_dp_secret_config
   kong_image             = local.kong_image
   image_pull_secrets     = local.kong_image_pull_secrets
@@ -202,5 +215,6 @@ module "kong-dp" {
   volume_secrets         = local.kong_dp_volume_secrets
   services               = var.dp_svcs
   load_balancer_services = var.dp_lb_svcs
+  ingress                = var.dp_ingress
   depends_on             = [kubernetes_namespace.kong]
 }

@@ -19,6 +19,10 @@ kong_control_plane_config = {
   "KONG_PORTAL_API_SSL_CERT"      = "/etc/secrets/kong-portal-api/tls.crt",
   "KONG_LOG_LEVEL"                = "debug",
   "KONG_ADMIN_GUI_AUTH"           = "basic-auth",
+  "KONG_ADMIN_GUI_URL"            = "https://kong-api-man.kong-hybrid-cp.svc.cluster.local:8445",
+  "KONG_ADMIN_API_URI"            = "https://kong-api-man.kong-hybrid-cp.svc.cluster.local:8444",
+  "KONG_PORTAL_API_URL"           = "https://kong-portal.kong-hybrid-cp.svc.cluster.local:8447",
+  "KONG_PORTAL_GUI_HOST"          = "kong-portal.kong-hybrid-cp.svc.cluster.local:8446",
   "KONG_ADMIN_GUI_LISTEN"         = "0.0.0.0:8002, 0.0.0.0:8445 ssl",
   "KONG_ENFORCE_RBAC"             = "on",
   "KONG_PROXY_ACCESS_LOG"         = "/dev/stdout",
@@ -72,29 +76,6 @@ kong_data_plane_config = {
   "KONG_SSL_CERT"                    = "/etc/secrets/kong-proxy/tls.crt",
   "KONG_SSL_CERT_KEY"                = "/etc/secrets/kong-proxy/tls.key",
 }
-
-#dp_lb_svcs = {
-#  "kong-proxy" = {
-#    namespace                   = "kong-hybrid-dp"
-#    load_balancer_source_ranges = ["0.0.0.0/0"]
-#    external_traffic_policy = "Local"
-#    health_check_node_port  = 30001
-#    annotations = {
-#      "service.beta.kubernetes.io/aws-load-balancer-backend-protocol" = "http",
-#      "service.beta.kubernetes.io/aws-load-balancer-ssl-cert"         = "<my-arn>",
-#      "service.beta.kubernetes.io/aws-load-balancer-ssl-ports"        = "kong-proxy-ssl",
-#      "service.beta.kubernetes.io/aws-load-balancer-security-groups"  = "<aws-security-group>"
-#    }
-#    ports = {
-#      "kong-proxy-ssl" = {
-#        port        = 8443
-#        protocol    = "TCP"
-#        target_port = 8000
-#      }
-#    }
-#  }
-#}
-
 
 # Enable ingress below
 #cp_ingress = {

@@ -45,13 +45,10 @@ variable "kong_database_password" {
 }
 
 variable "namespaces" {
+  type = map(string)
   default = {
-    kong-hybrid-cp = {
-      name = "kong-hybrid-cp"
-    },
-    kong-hybrid-dp = {
-      name = "kong-hybrid-dp"
-    }
+    "control_plane" = "kong-hybrid-cp",
+    "data_plane"    = "kong-hybrid-dp"
   }
 }
 
@@ -60,11 +57,11 @@ variable "tls_cluster" {
     private_key_algorithm = "ECDSA"
     ca_common_name        = "kong-cluster-ca"
     override_common_name  = "kong_clustering"
-    namespaces            = ["kong-hybrid-dp"]
+    namespaces            = ["data_plane"]
     certificates = {
       "kong-cluster" = {
         common_name  = null
-        namespaces   = ["kong-hybrid-cp", "kong-hybrid-dp"]
+        namespaces   = ["control_plane", "data_plane"]
         allowed_uses = null
         dns_names    = null
       }
@@ -75,11 +72,11 @@ variable "tls_cluster" {
 variable "tls_services" {
   default = {
     ca_common_name = "kong-services-ca"
-    namespaces     = ["kong-hybrid-cp"]
+    namespaces     = ["control_plane", "data_plane"]
     certificates = {
       "kong-admin-api" = {
         common_name = null
-        namespaces  = ["kong-hybrid-cp"]
+        namespaces  = ["control_plane"]
         allowed_uses = [
           "key_encipherment",
           "digital_signature",
@@ -88,7 +85,7 @@ variable "tls_services" {
       },
       "kong-admin-gui" = {
         common_name = null
-        namespaces  = ["kong-hybrid-cp"]
+        namespaces  = ["control_plane"]
         allowed_uses = [
           "key_encipherment",
           "digital_signature",
@@ -97,7 +94,7 @@ variable "tls_services" {
       },
       "kong-portal-gui" = {
         common_name = null
-        namespaces  = ["kong-hybrid-cp"]
+        namespaces  = ["control_plane"]
         allowed_uses = [
           "key_encipherment",
           "digital_signature",
@@ -106,7 +103,7 @@ variable "tls_services" {
       }
       "kong-portal-api" = {
         common_name = null
-        namespaces  = ["kong-hybrid-cp"]
+        namespaces  = ["control_plane"]
         allowed_uses = [
           "key_encipherment",
           "digital_signature",
@@ -115,7 +112,7 @@ variable "tls_services" {
       },
       "kong-proxy" = {
         common_name = null
-        namespaces  = ["kong-hybrid-dp"]
+        namespaces  = ["data_plane"]
         allowed_uses = [
           "key_encipherment",
           "digital_signature",
@@ -134,29 +131,10 @@ variable "tls_ingress" {
   }
 }
 
-
 variable "dp_svcs" {
   description = "A map of objects that are used to create clusterIP services to expose Kong endpoints"
   type = map(object({
-    namespace   = string
     annotations = map(string)
-    ports = map(object({
-      port        = number
-      protocol    = string
-      target_port = number
-    }))
-  }))
-  default = {}
-}
-
-variable "dp_lb_svcs" {
-  description = "A map of objects that are used to create LoadBalancer services to expose Kong endpoints to outside of the cluster"
-  type = map(object({
-    namespace                   = string
-    load_balancer_source_ranges = list(string)
-    annotations                 = map(string)
-    external_traffic_policy     = string
-    health_check_node_port      = number
     ports = map(object({
       port        = number
       protocol    = string
@@ -165,11 +143,7 @@ variable "dp_lb_svcs" {
   }))
   default = {
     "kong-proxy" = {
-      namespace                   = "kong-hybrid-dp"
-      load_balancer_source_ranges = ["0.0.0.0/0"]
-      annotations                 = {}
-      external_traffic_policy     = "Cluster"
-      health_check_node_port      = null
+      annotations = {}
       ports = {
         "kong-proxy" = {
           port        = 8000
@@ -186,10 +160,25 @@ variable "dp_lb_svcs" {
   }
 }
 
+variable "dp_lb_svcs" {
+  description = "A map of objects that are used to create LoadBalancer services to expose Kong endpoints to outside of the cluster"
+  type = map(object({
+    annotations                 = map(string)
+    load_balancer_source_ranges = list(string)
+    external_traffic_policy     = string
+    health_check_node_port      = number
+    ports = map(object({
+      port        = number
+      protocol    = string
+      target_port = number
+    }))
+  }))
+  default = {}
+}
+
 variable "cp_lb_svcs" {
   description = "A map of objects that are used to create LoadBalancer services to expose Kong endpoints to outside of the cluster"
   type = map(object({
-    namespace                   = string
     load_balancer_source_ranges = list(string)
     annotations                 = map(string)
     external_traffic_policy     = string
@@ -200,13 +189,75 @@ variable "cp_lb_svcs" {
       target_port = number
     }))
   }))
+  default = {}
+}
+
+variable "cp_ingress" {
+  description = "A map that represents kubernetes ingress resources"
+  type = map(object({
+    annotations = map(string)
+    tls = object({
+      hosts       = list(string)
+      secret_name = string
+    })
+    rules = map(object({
+      host = string
+      paths = map(object({
+        service_name = string
+        service_port = number
+      }))
+    }))
+  }))
+  default = {}
+}
+
+variable "dp_ingress" {
+  description = "A map that represents kubernetes ingress resources"
+  type = map(object({
+    annotations = map(string)
+    tls = object({
+      hosts       = list(string)
+      secret_name = string
+    })
+    rules = map(object({
+      host = string
+      paths = map(object({
+        service_name = string
+        service_port = number
+      }))
+    }))
+  }))
+  default = {}
+}
+
+variable "cp_svcs" {
+  description = "A map of objects that are used to create clusterIP services to expose Kong endpoints"
+  type = map(object({
+    annotations = map(string)
+    ports = map(object({
+      port        = number
+      protocol    = string
+      target_port = number
+    }))
+  }))
   default = {
+    "kong-cluster" = {
+      annotations = {}
+      ports = {
+        "kong-cluster" = {
+          port        = 8005
+          protocol    = "TCP"
+          target_port = 8005
+        },
+        "kong-telemetry" = {
+          port        = 8006
+          protocol    = "TCP"
+          target_port = 8006
+        }
+      }
+    }
     "kong-api-man" = {
-      namespace                   = "kong-hybrid-cp"
-      load_balancer_source_ranges = ["0.0.0.0/0"]
-      annotations                 = {}
-      external_traffic_policy     = "Cluster"
-      health_check_node_port      = null
+      annotations = {}
       ports = {
         "kong-admin" = {
           port        = 8001
@@ -231,11 +282,7 @@ variable "cp_lb_svcs" {
       }
     }
     "kong-portal" = {
-      namespace                   = "kong-hybrid-cp"
-      load_balancer_source_ranges = ["0.0.0.0/0"]
-      annotations                 = {}
-      external_traffic_policy     = "Cluster"
-      health_check_node_port      = null
+      annotations = {}
       ports = {
         "kong-portal-admin" = {
           port        = 8004
@@ -256,37 +303,6 @@ variable "cp_lb_svcs" {
           port        = 8446
           protocol    = "TCP"
           target_port = 8446
-        }
-      }
-    }
-  }
-}
-
-variable "cp_svcs" {
-  description = "A map of objects that are used to create clusterIP services to expose Kong endpoints"
-  type = map(object({
-    namespace   = string
-    annotations = map(string)
-    ports = map(object({
-      port        = number
-      protocol    = string
-      target_port = number
-    }))
-  }))
-  default = {
-    "kong-cluster" = {
-      namespace   = "kong-hybrid-cp"
-      annotations = {}
-      ports = {
-        "kong-cluster" = {
-          port        = 8005
-          protocol    = "TCP"
-          target_port = 8005
-        },
-        "kong-telemetry" = {
-          port        = 8006
-          protocol    = "TCP"
-          target_port = 8006
         }
       }
     }
@@ -344,4 +360,34 @@ variable "portal_config_secret_key" {
 variable "kong_superuser_secret_name" {
   description = "A string used as the name of the image pull kubernetes secret"
   default     = "kong-enterprise-superuser-password"
+}
+
+variable "proxy_url" {
+  description = "A string to override the proxy url"
+  type        = string
+  default     = ""
+}
+
+variable "admin_url" {
+  description = "A string to override the admin url"
+  type        = string
+  default     = ""
+}
+
+variable "manager_url" {
+  description = "A string to override the manager url"
+  type        = string
+  default     = ""
+}
+
+variable "portal_admin_url" {
+  description = "A string to override the portal admin api url"
+  type        = string
+  default     = ""
+}
+
+variable "portal_gui_url" {
+  description = "A string to override the portal gui url"
+  type        = string
+  default     = ""
 }

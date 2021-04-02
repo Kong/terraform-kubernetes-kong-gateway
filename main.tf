@@ -28,7 +28,7 @@ resource "kubernetes_ingress" "this-ingress" {
   wait_for_load_balancer = true
   metadata {
     name        = each.key
-    namespace   = each.value.namespace
+    namespace   = var.namespace
     annotations = each.value.annotations
   }
   spec {
@@ -64,7 +64,7 @@ resource "kubernetes_service" "this-service" {
   for_each = var.services
   metadata {
     name        = each.key
-    namespace   = each.value.namespace
+    namespace   = var.namespace
     annotations = each.value.annotations
   }
   spec {
@@ -90,7 +90,7 @@ resource "kubernetes_service" "this-load-balancer-service" {
   for_each = var.load_balancer_services
   metadata {
     name        = each.key
-    namespace   = each.value.namespace
+    namespace   = var.namespace
     annotations = each.value.annotations
   }
   spec {
