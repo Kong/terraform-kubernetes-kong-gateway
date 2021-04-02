@@ -2,7 +2,7 @@ resource "kubernetes_secret" "kong_enterprise_docker_cfg-cp" {
   for_each = var.namespaces
   metadata {
     name      = var.image_pull_secret_name
-    namespace = kubernetes_namespace.kong[each.value["name"]].metadata[0].name
+    namespace = kubernetes_namespace.kong[each.key].metadata[0].name
   }
 
   data = {
@@ -16,7 +16,7 @@ resource "kubernetes_secret" "license-cp" {
   for_each = var.namespaces
   metadata {
     name      = var.kong_license_secret_name
-    namespace = kubernetes_namespace.kong[each.value["name"]].metadata[0].name
+    namespace = kubernetes_namespace.kong[each.key].metadata[0].name
   }
 
   type = "Opaque"
@@ -25,10 +25,11 @@ resource "kubernetes_secret" "license-cp" {
   }
 }
 
+
 resource "kubernetes_secret" "kong-enterprise-superuser-password" {
   metadata {
     name      = var.kong_superuser_secret_name
-    namespace = kubernetes_namespace.kong["kong-hybrid-cp"].metadata[0].name
+    namespace = kubernetes_namespace.kong["control_plane"].metadata[0].name
   }
 
   type = "Opaque"
@@ -40,7 +41,7 @@ resource "kubernetes_secret" "kong-enterprise-superuser-password" {
 resource "kubernetes_secret" "kong-session-conf" {
   metadata {
     name      = var.session_conf_secret_name
-    namespace = kubernetes_namespace.kong["kong-hybrid-cp"].metadata[0].name
+    namespace = kubernetes_namespace.kong["control_plane"].metadata[0].name
   }
 
   type = "Opaque"
@@ -53,7 +54,7 @@ resource "kubernetes_secret" "kong-session-conf" {
 resource "kubernetes_secret" "kong-database-password" {
   metadata {
     name      = var.kong_database_secret_name
-    namespace = kubernetes_namespace.kong["kong-hybrid-cp"].metadata[0].name
+    namespace = kubernetes_namespace.kong["control_plane"].metadata[0].name
   }
 
   type = "Opaque"
