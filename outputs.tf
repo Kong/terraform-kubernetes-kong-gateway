@@ -25,7 +25,14 @@ locals {
     }
   }
 
-  ingress = kubernetes_ingress.this-ingress
+  ingress = {
+    for name, svc in kubernetes_ingress.this-ingress :
+    name => {
+      endpoint = svc.status.0.load_balancer.0.ingress.0.hostname != "" ? svc.status.0.load_balancer.0.ingress.0.hostname : svc.status.0.load_balancer.0.ingress.0.ip
+    }
+  }
+
+  #ingress = kubernetes_ingress.this-ingress
 
   tmp_map = merge(local.cluster_ip_services, local.load_balancer_services)
 
@@ -135,21 +142,7 @@ locals {
 
 }
 
-output "services" {
-  value = local.services
-}
 
-output "load_balancer_services" {
-  value = local.load_balancer_services
-}
-
-output "lb_raw" {
-  value = kubernetes_service.this-load-balancer-service
-}
-
-output "svc_raw" {
-  value = kubernetes_service.this-service
-}
 
 output "proxy_endpoint" {
   value = local.proxy
@@ -225,4 +218,20 @@ output "service_map" {
 
 output "ingress" {
   value = local.ingress
+}
+
+output "services" {
+  value = local.services
+}
+
+output "load_balancer_services" {
+  value = local.load_balancer_services
+}
+
+output "lb_raw" {
+  value = kubernetes_service.this-load-balancer-service
+}
+
+output "svc_raw" {
+  value = kubernetes_service.this-service
 }
