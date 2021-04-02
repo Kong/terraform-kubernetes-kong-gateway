@@ -55,7 +55,7 @@ jobs:
           cat << EOF > ~/.kong_license
           ${{ secrets.KONG_LICENSE_FILE }}
           EOF
-          cp examples/hybrid_internal/terraform.tfvars.example examples/hybrid_internal/terraform.tfvars
+          cp examples/hybrid/terraform.tfvars.example examples/hybrid/terraform.tfvars
       - name: Kitchen Test
         run: kitchen converge default || true
         env:
