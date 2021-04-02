@@ -63,7 +63,7 @@ jobs:
           TF_VAR_kong_database_password: ${{ secrets.KONG_DATABASE_PASSWORD }}
           TF_VAR_kong_image: ${{ secrets.KONG_IMAGE }}
       - name: wait control plane
-        run: while [[ $(kubectl -n kong-hybrid-cp-$(terraform workspace show) get pods -l name=kong-enterprise-cp -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for pod" && sleep 1; done
+        run: while [[ $(kubectl -n kong-hybrid-cp-$(terraform workspace show) get pods -l name=kong-hybrid-cp-$(terraform workspace show) -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for pod" && sleep 1; done
       - name: Verify
         run: kitchen verify default
       - name: Kitchen Destroy
