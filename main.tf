@@ -206,8 +206,62 @@ resource "kubernetes_deployment" "this-kong-deployment" {
               read_only  = volume_mount.value.read_only
             }
           }
+
+          resources {
+            requests = {
+              cpu    = var.cpu_request
+              memory = var.memory_request
+            }
+            limits = {
+              cpu    = var.cpu_limit
+              memory = var.memory_limit
+            }
+          }
+
+          dynamic "liveness_probe" {
+            for_each = lookup(var.config, "KONG_STATUS_LISTEN", "") != "" ? ["liveness_probe"] : []
+            content {
+              dynamic "http_get" {
+                for_each = lookup(var.config, "KONG_STATUS_LISTEN", "") != "" ? ["http_get"] : []
+                content {
+                  path   = var.status_path
+                  port   = local.status_port
+                  scheme = local.status_scheme
+                }
+              }
+              initial_delay_seconds = var.liveness_initial_delay_seconds
+              timeout_seconds       = var.liveness_timeout_seconds
+              period_seconds        = var.liveness_period_seconds
+              success_threshold     = var.liveness_success_threshold
+              failure_threshold     = var.liveness_failure_threshold
+            }
+          }
+
+          dynamic "readiness_probe" {
+            for_each = lookup(var.config, "KONG_STATUS_LISTEN", "") != "" ? ["readiness_probe"] : []
+            content {
+              dynamic "http_get" {
+                for_each = lookup(var.config, "KONG_STATUS_LISTEN", "") != "" ? ["http_get"] : []
+                content {
+                  path   = var.status_path
+                  port   = local.status_port
+                  scheme = local.status_scheme
+                }
+              }
+              initial_delay_seconds = var.readiness_initial_delay_seconds
+              timeout_seconds       = var.readiness_timeout_seconds
+              period_seconds        = var.readiness_period_seconds
+              success_threshold     = var.readiness_success_threshold
+              failure_threshold     = var.readiness_failure_threshold
+            }
+          }
         }
       }
     }
   }
+}
+
+locals {
+  status_port   = split(" ", split(":", lookup(var.config, "KONG_STATUS_LISTEN", "0.0.0.0:8100"))[1])[0]
+  status_scheme = length(split(" ", lookup(var.config, "KONG_STATUS_LISTEN", "0.0.0.0:8100"))) > 1 ? "HTTPS" : "HTTP"
 }
