@@ -169,3 +169,93 @@ variable "deployment_annotations" {
   type        = map(string)
   default     = {}
 }
+
+variable "cpu_limit" {
+  description = "The pod cpu limit to set"
+  type        = string
+  default     = "250m"
+}
+
+variable "memory_limit" {
+  description = "The pod memory limit to set"
+  type        = string
+  default     = "500Mi"
+}
+
+variable "cpu_request" {
+  description = "The pod cpu request to set"
+  type        = string
+  default     = "100m"
+}
+
+variable "memory_request" {
+  description = "The pod memory request to set"
+  type        = string
+  default     = "256Mi"
+}
+
+variable "status_path" {
+  description = "The path to use on the status endpoint"
+  type        = string
+  default     = "/status"
+}
+
+variable "liveness_initial_delay_seconds" {
+  description = "Number of seconds after the container has started before liveness probes are initiated"
+  type        = number
+  default     = 5
+}
+
+variable "liveness_timeout_seconds" {
+  description = "Number of seconds after which the probe times out. For more info see"
+  type        = number
+  default     = 5
+}
+
+variable "liveness_period_seconds" {
+  description = "How often (in seconds) to perform the probe"
+  type        = number
+  default     = 10
+}
+
+variable "liveness_success_threshold" {
+  description = "Minimum consecutive successes for the probe to be considered successful after having failed"
+  type        = number
+  default     = 1
+}
+
+variable "liveness_failure_threshold" {
+  description = "Minimum consecutive failures for the probe to be considered failed after having succeeded"
+  type        = number
+  default     = 3
+}
+
+variable "readiness_initial_delay_seconds" {
+  description = "Number of seconds after the container has started before readiness probes are initiated"
+  type        = number
+  default     = 5
+}
+
+variable "readiness_timeout_seconds" {
+  description = "Number of seconds after which the probe times out. For more info see"
+  type        = number
+  default     = 5
+}
+
+variable "readiness_period_seconds" {
+  description = "How often (in seconds) to perform the probe"
+  type        = number
+  default     = 10
+}
+
+variable "readiness_success_threshold" {
+  description = "Minimum consecutive successes for the probe to be considered successful after having failed"
+  type        = number
+  default     = 1
+}
+
+variable "readiness_failure_threshold" {
+  description = "Minimum consecutive failures for the probe to be considered failed after having succeeded"
+  type        = number
+  default     = 3
+}
