@@ -75,7 +75,7 @@ jobs:
           TF_VAR_super_admin_password: ${{ secrets.SUPER_ADMIN_PASSWORD }}
           TF_VAR_kong_database_password: ${{ secrets.KONG_DATABASE_PASSWORD }}
           TF_VAR_kong_image: ${{ secrets.KONG_IMAGE }}
-      - name: Destroy
-        run: make destroy
+      - name: Clean
+        run: make clean
         if: ${{ always() }}
         working-directory: examples/hybrid/
