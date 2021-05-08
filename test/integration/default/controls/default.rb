@@ -1,59 +1,38 @@
-require 'net/http'
-require 'uri'
+api = input('kong_admin_url')
+proxy = input('kong_proxy_url')
+token = input('kong_token')
 
-api = input('kong-api-endpoint-ip')
-manager = input('kong-manager-endpoint-ip')
-proxy = input('kong-proxy-endpoint-ip')
-token = input('kong-super-admin-token')
+require_relative '../../libraries/kong_util'
+wait("#{api}/clustering/status", 500, token)
 
-# set up service and route so we can test
-uri = URI.parse("#{api}/services")
-request = Net::HTTP::Post.new(uri)
-request['Kong-Admin-Token'] = token
-request.set_form_data(
-  'name' => 'test',
-  'url' => 'http://httpbin.org'
-)
+post("#{api}/services", { 'name' => 'test', 'url' => 'http://httpbin.org' }, token)
 
-Net::HTTP.start(uri.hostname, uri.port).request(request)
+post("#{api}/services/test/routes", { 'name' => 'testRoute', 'paths' => '/test' }, token)
 
-uri = URI.parse("#{api}/services/test/routes")
-request = Net::HTTP::Post.new(uri)
-request['Kong-Admin-Token'] = token
-request.set_form_data(
-  'name' => 'testRoute',
-  'paths' => '/test'
-)
+members = JSON.parse(http("#{api}/clustering/status",
+                          method: 'GET',
+                          headers: { 'Kong-Admin-Token' => token },
+                          ssl_verify: false).body)
 
-Net::HTTP.start(uri.hostname, uri.port).request(request)
-
-# start testing
-cluster_members = JSON.parse(http("#{api}/clustering/status",
-                                  method: 'GET',
-                                  headers: { 'Kong-Admin-Token' => token }).body)
-describe cluster_members do
+describe members do
   it { should_not be_empty }
 end
 
 describe http("#{api}/services/test",
-              method: 'GET',
-              headers: { 'Kong-Admin-Token' => token }) do
+              method: 'GET', headers: { 'Kong-Admin-Token' => token },
+              ssl_verify: false) do
                 its('status') { should cmp 200 }
               end
 
 describe http("#{api}/services/test/routes/testRoute",
-              method: 'GET',
-              headers: { 'Kong-Admin-Token' => token }) do
+              method: 'GET', headers: { 'Kong-Admin-Token' => token },
+              ssl_verify: false) do
                 its('status') { should cmp 200 }
               end
 
 sleep(10) # wait for route to propergate
 describe http("#{proxy}/test/get",
-              method: 'GET',
-              headers: { 'Kong-Admin-Token' => token }) do
+              method: 'GET', headers: { 'Kong-Admin-Token' => token },
+              ssl_verify: false) do
                 its('status') { should cmp 200 }
               end
-
-describe http(manager, method: 'GET') do
-  its('status') { should cmp 200 }
-end
