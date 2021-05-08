@@ -1,0 +1,4 @@
+kong-api-endpoint-ip: ${kong-api-endpoint-ip}
+kong-proxy-endpoint-ip: ${kong-proxy-endpoint-ip}
+kong-manager-endpoint-ip: ${kong-manager-endpoint-ip}
+kong-super-admin-token: ${kong-super-admin-token}

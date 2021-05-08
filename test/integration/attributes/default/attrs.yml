@@ -1,1 +1,4 @@
-
+kong-api-endpoint-ip: http://10.100.11.173:8001
+kong-proxy-endpoint-ip: http://10.100.71.176:8000
+kong-manager-endpoint-ip: http://10.100.11.173:8002
+kong-super-admin-token: password
