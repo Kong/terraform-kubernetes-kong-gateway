@@ -30,6 +30,10 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     steps:
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 0.14.8
       - name: Checkout
         uses: actions/checkout@v2
       - uses: ruby/setup-ruby@v1
