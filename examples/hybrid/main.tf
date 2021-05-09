@@ -198,6 +198,7 @@ module "kong-cp" {
   services               = var.cp_svcs
   load_balancer_services = var.cp_lb_svcs
   ingress                = var.cp_ingress
+  enable_autoscaler      = var.enable_autoscaler
   depends_on             = [kubernetes_namespace.kong]
 }
 
@@ -216,6 +217,7 @@ module "kong-dp" {
   services               = var.dp_svcs
   load_balancer_services = var.dp_lb_svcs
   ingress                = var.dp_ingress
+  enable_autoscaler      = var.enable_autoscaler
   depends_on             = [kubernetes_namespace.kong]
 }
 
