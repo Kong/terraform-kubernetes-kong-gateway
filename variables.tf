@@ -293,3 +293,9 @@ variable "termination_grace_period_seconds" {
   type        = number
   default     = 40
 }
+
+variable "pre_stop_command" {
+  description = "The command to run just before terminating kong"
+  type        = list(string)
+  default     = ["/bin/sh", "-c", "/bin/sleep 15 && kong quit"]
+}
