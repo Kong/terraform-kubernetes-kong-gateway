@@ -285,3 +285,11 @@ variable "average_cpu_utilization" {
   type        = number
   default     = 80
 }
+
+########### Termination settings #################
+
+variable "termination_grace_period_seconds" {
+  description = "The number of secods to wait before terminating the pod"
+  type        = number
+  default     = 40
+}
