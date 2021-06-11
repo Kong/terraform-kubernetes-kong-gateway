@@ -40,3 +40,5 @@ test/fixtures/*/terraform.tfvars
 test/fixtures/*/.terraform
 test/fixtures/*/terraform.tfstate*
 test/fixtures/*/terraform.tfstate.d/*
+test/integration/*/inspec.lock
+test/integration/attributes/*/attrs.yml

@@ -391,3 +391,11 @@ variable "portal_gui_url" {
   type        = string
   default     = ""
 }
+
+########### Autoscaling settings #################
+
+variable "enable_autoscaler" {
+  description = "Should we enable horizontal pod autoscaling"
+  type        = bool
+  default     = false
+}

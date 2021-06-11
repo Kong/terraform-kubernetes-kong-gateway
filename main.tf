@@ -113,6 +113,37 @@ resource "kubernetes_service" "this-load-balancer-service" {
   }
 }
 
+# Autoscaling settings
+resource "kubernetes_horizontal_pod_autoscaler" "this-autoscaler" {
+  count = var.enable_autoscaler ? 1 : 0
+  metadata {
+    name      = var.deployment_name
+    namespace = var.namespace
+  }
+
+  spec {
+    min_replicas = var.autoscaler_min_replicas
+    max_replicas = var.autoscaler_max_replicas
+
+    scale_target_ref {
+      api_version = "apps/v2beta2"
+      kind        = "Deployment"
+      name        = var.deployment_name
+    }
+
+    metric {
+      type = "Resource"
+      resource {
+        name = "cpu"
+        target {
+          type                = "Utilization"
+          average_utilization = var.average_cpu_utilization
+        }
+      }
+    }
+  }
+}
+
 # standard kong kubernetes deployment.
 resource "kubernetes_deployment" "this-kong-deployment" {
   metadata {

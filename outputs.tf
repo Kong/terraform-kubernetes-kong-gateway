@@ -28,31 +28,93 @@ locals {
   ingress = {
     for name, svc in kubernetes_ingress.this-ingress :
     name => {
-      endpoint = svc.status.0.load_balancer.0.ingress.0.hostname != "" ? svc.status.0.load_balancer.0.ingress.0.hostname : svc.status.0.load_balancer.0.ingress.0.ip
+      for rule in svc.spec.0.rule :
+      rule.http.0.path.0.backend.0.service_name => {
+        endpoint = svc.status.0.load_balancer.0.ingress.0.hostname != "" ? svc.status.0.load_balancer.0.ingress.0.hostname : svc.status.0.load_balancer.0.ingress.0.ip
+        port     = length(svc.spec.0.tls) > 0 ? 443 : 80
+        ip       = svc.status.0.load_balancer.0.ingress.0.hostname != "" ? svc.status.0.load_balancer.0.ingress.0.hostname : svc.status.0.load_balancer.0.ingress.0.ip
+        name     = length(svc.spec.0.tls) > 0 ? "${rule.http.0.path.0.backend.0.service_name}-ssl" : rule.http.0.path.0.backend.0.service_name
+      }
     }
   }
 
-  #ingress = kubernetes_ingress.this-ingress
+  s_map = merge(local.cluster_ip_services, local.load_balancer_services)
+  i_map = merge(local.ingress)
 
-  tmp_map = merge(local.cluster_ip_services, local.load_balancer_services)
-
-  service_map = merge(flatten([
-    for k, v in local.tmp_map :
-    [
-      for x in keys(v) :
-      {
-        (x) = v[x]
-      }
-    ]
-  ])...)
-
-
-  services = flatten([
-    for k, v in local.tmp_map :
+  ingresses = flatten([
+    for k, v in local.i_map :
     [
       for x, y in v :
       y
     ]
+  ])
+
+  services = flatten([
+    for k, v in local.s_map :
+    [
+      for x, y in v :
+      y
+    ]
+  ])
+
+  proxy_ingress_endpoint = flatten([
+    for item in local.ingresses :
+    lookup(item, "endpoint", "") if lookup(item, "name", "") == var.service_name_map.kong_proxy
+  ])
+
+  proxy_ssl_ingress_endpoint = flatten([
+    for item in local.ingresses :
+    lookup(item, "endpoint", "") if lookup(item, "name", "") == var.service_name_map.kong_proxy_ssl
+  ])
+
+  admin_ingress_endpoint = flatten([
+    for item in local.ingresses :
+    lookup(item, "endpoint", "") if lookup(item, "name", "") == var.service_name_map.kong_admin
+  ])
+
+  admin_ssl_ingress_endpoint = flatten([
+    for item in local.ingresses :
+    lookup(item, "endpoint", "") if lookup(item, "name", "") == var.service_name_map.kong_admin_ssl
+  ])
+
+  manager_ingress_endpoint = flatten([
+    for item in local.ingresses :
+    lookup(item, "endpoint", "") if lookup(item, "name", "") == var.service_name_map.kong_manager
+  ])
+
+  manager_ssl_ingress_endpoint = flatten([
+    for item in local.ingresses :
+    lookup(item, "endpoint", "") if lookup(item, "name", "") == var.service_name_map.kong_manager_ssl
+  ])
+
+  portal_admin_ingress_endpoint = flatten([
+    for item in local.ingresses :
+    lookup(item, "endpoint", "") if lookup(item, "name", "") == var.service_name_map.kong_portal_admin
+  ])
+
+  portal_admin_ssl_ingress_endpoint = flatten([
+    for item in local.ingresses :
+    lookup(item, "endpoint", "") if lookup(item, "name", "") == var.service_name_map.kong_portal_admin_ssl
+  ])
+
+  portal_gui_ingress_endpoint = flatten([
+    for item in local.ingresses :
+    lookup(item, "endpoint", "") if lookup(item, "name", "") == var.service_name_map.kong_portal_gui
+  ])
+
+  portal_gui_ssl_ingress_endpoint = flatten([
+    for item in local.ingresses :
+    lookup(item, "endpoint", "") if lookup(item, "name", "") == var.service_name_map.kong_portal_gui_ssl
+  ])
+
+  cluster_ingress_endpoint = flatten([
+    for item in local.ingresses :
+    lookup(item, "endpoint", "") if lookup(item, "name", "") == var.service_name_map.kong_cluster
+  ])
+
+  telemetry_ingress_endpoint = flatten([
+    for item in local.ingresses :
+    lookup(item, "endpoint", "") if lookup(item, "name", "") == var.service_name_map.kong_telemetry
   ])
 
   proxy_endpoint = flatten([
@@ -115,18 +177,18 @@ locals {
     lookup(item, "endpoint", "") if lookup(item, "name", "") == var.service_name_map.kong_telemetry
   ])
 
-  proxy_http        = length(local.proxy_endpoint) > 0 ? tolist(local.proxy_endpoint).0 : ""
-  proxy_ssl         = length(local.proxy_ssl_endpoint) > 0 ? tolist(local.proxy_ssl_endpoint).0 : ""
-  admin_http        = length(local.admin_endpoint) > 0 ? tolist(local.admin_endpoint).0 : ""
-  admin_ssl         = length(local.admin_ssl_endpoint) > 0 ? tolist(local.admin_ssl_endpoint).0 : ""
-  manager_http      = length(local.manager_endpoint) > 0 ? tolist(local.manager_endpoint).0 : ""
-  manager_ssl       = length(local.manager_ssl_endpoint) > 0 ? tolist(local.manager_ssl_endpoint).0 : ""
-  portal_admin_http = length(local.portal_admin_endpoint) > 0 ? tolist(local.portal_admin_endpoint).0 : ""
-  portal_admin_ssl  = length(local.portal_admin_ssl_endpoint) > 0 ? tolist(local.portal_admin_ssl_endpoint).0 : ""
-  portal_gui_http   = length(local.portal_gui_endpoint) > 0 ? tolist(local.portal_gui_endpoint).0 : ""
-  portal_gui_ssl    = length(local.portal_gui_ssl_endpoint) > 0 ? tolist(local.portal_gui_ssl_endpoint).0 : ""
-  cluster_ws        = length(local.cluster_endpoint) > 0 ? tolist(local.cluster_endpoint).0 : ""
-  telemetry_ws      = length(local.telemetry_endpoint) > 0 ? tolist(local.telemetry_endpoint).0 : ""
+  proxy_http        = length(local.proxy_ingress_endpoint) > 0 ? tolist(local.proxy_ingress_endpoint).0 : length(local.proxy_endpoint) > 0 ? tolist(local.proxy_endpoint).0 : ""
+  proxy_ssl         = length(local.proxy_ssl_ingress_endpoint) > 0 ? tolist(local.proxy_ssl_ingress_endpoint).0 : length(local.proxy_ssl_endpoint) > 0 ? tolist(local.proxy_ssl_endpoint).0 : ""
+  admin_http        = length(local.admin_ingress_endpoint) > 0 ? tolist(local.admin_ingress_endpoint).0 : length(local.admin_endpoint) > 0 ? tolist(local.admin_endpoint).0 : ""
+  admin_ssl         = length(local.admin_ssl_ingress_endpoint) > 0 ? tolist(local.admin_ssl_ingress_endpoint).0 : length(local.admin_ssl_endpoint) > 0 ? tolist(local.admin_ssl_endpoint).0 : ""
+  manager_http      = length(local.manager_ingress_endpoint) > 0 ? tolist(local.manager_ingress_endpoint).0 : length(local.manager_endpoint) > 0 ? tolist(local.manager_endpoint).0 : ""
+  manager_ssl       = length(local.manager_ssl_ingress_endpoint) > 0 ? tolist(local.manager_ssl_ingress_endpoint).0 : length(local.manager_ssl_endpoint) > 0 ? tolist(local.manager_ssl_endpoint).0 : ""
+  portal_admin_http = length(local.portal_admin_ingress_endpoint) > 0 ? tolist(local.portal_admin_ingress_endpoint).0 : length(local.portal_admin_endpoint) > 0 ? tolist(local.portal_admin_endpoint).0 : ""
+  portal_admin_ssl  = length(local.portal_admin_ssl_ingress_endpoint) > 0 ? tolist(local.portal_admin_ssl_ingress_endpoint).0 : length(local.portal_admin_ssl_endpoint) > 0 ? tolist(local.portal_admin_ssl_endpoint).0 : ""
+  portal_gui_http   = length(local.portal_gui_ingress_endpoint) > 0 ? tolist(local.portal_gui_ingress_endpoint).0 : length(local.portal_gui_endpoint) > 0 ? tolist(local.portal_gui_endpoint).0 : ""
+  portal_gui_ssl    = length(local.portal_gui_ssl_ingress_endpoint) > 0 ? tolist(local.portal_gui_ssl_ingress_endpoint).0 : length(local.portal_gui_ssl_endpoint) > 0 ? tolist(local.portal_gui_ssl_endpoint).0 : ""
+  cluster_ws        = length(local.cluster_endpoint) > 0 ? tolist(local.cluster_endpoint).0 : length(local.cluster_endpoint) > 0 ? tolist(local.cluster_endpoint).0 : ""
+  telemetry_ws      = length(local.telemetry_endpoint) > 0 ? tolist(local.telemetry_endpoint).0 : length(local.telemetry_endpoint) > 0 ? tolist(local.telemetry_endpoint).0 : ""
 
 
   proxy               = lookup(var.config, "KONG_PROXY_URL", "") != "" ? lookup(var.config, "KONG_PROXY_URL", "") : local.proxy_ssl != "" ? "https://${local.proxy_ssl}" : "http://${local.proxy_http}"
@@ -208,10 +270,6 @@ output "cluster_endpoint" {
 
 output "telemetry_endpoint" {
   value = local.telemetry
-}
-
-output "service_map" {
-  value = local.service_map
 }
 
 output "ingress" {

@@ -198,6 +198,7 @@ module "kong-cp" {
   services               = var.cp_svcs
   load_balancer_services = var.cp_lb_svcs
   ingress                = var.cp_ingress
+  enable_autoscaler      = var.enable_autoscaler
   depends_on             = [kubernetes_namespace.kong]
 }
 
@@ -216,5 +217,21 @@ module "kong-dp" {
   services               = var.dp_svcs
   load_balancer_services = var.dp_lb_svcs
   ingress                = var.dp_ingress
+  enable_autoscaler      = var.enable_autoscaler
   depends_on             = [kubernetes_namespace.kong]
+}
+
+locals {
+  attrs = templatefile("${path.module}/templates/attrs", {
+    kong-api-endpoint-ip     = "http://${module.kong-cp.admin_http_endpoint}"
+    kong-proxy-endpoint-ip   = "http://${module.kong-dp.proxy_http_endpoint}"
+    kong-manager-endpoint-ip = "http://${module.kong-cp.manager_http_endpoint}"
+    kong-super-admin-token   = var.super_admin_password
+  })
+}
+
+resource "local_file" "attrs_create" {
+  content         = local.attrs
+  filename        = "${path.root}/../../test/integration/attributes/default/attrs.yml"
+  file_permission = "0644"
 }

@@ -5,20 +5,18 @@ on:
     paths-ignore:
       - '**/*.md'
 
-env:
-  TERRAFORM_VERSION: 0.14.7
-
 jobs:
   format:
     name: Terraform-Format
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     steps:
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 0.14.8
       - name: Checkout
         uses: actions/checkout@v2
-      - uses: hashicorp/setup-terraform@v1
-        with:
-          terraform_version: ${{ env.TERRAFORM_VERSION }}
       - name: Terraform Format
         id: fmt
         run: terraform fmt -recursive
@@ -29,6 +27,10 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
     steps:
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 0.14.8
       - name: Checkout
         uses: actions/checkout@v2
       - uses: ruby/setup-ruby@v1
@@ -40,6 +42,14 @@ jobs:
           minikube version: 'v1.18.1'
           kubernetes version: 'v1.20.2'
           github token: ${{ secrets.GITHUB_TOKEN }}
+      - name: install ingress
+        run: |
+          minikube addons enable ingress
+          kubectl patch configmap -n kube-system nginx-load-balancer-conf --patch '{"data":{"proxy-buffer-size":"16k"}}'
+      - name: install metallb
+        run: |
+          minikube addons enable metallb
+          kubectl apply -f test/fixtures/minikube/cm.yaml
       - name: wait
         run: while [[ $(kubectl -n kube-system get pods -l k8s-app=kube-dns -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for pod" && sleep 1; done
       - name: Docker login
@@ -50,22 +60,22 @@ jobs:
           password: ${{ secrets.DOCKER_KEY }}
       - name: write config
         run: |
-          gem install bundler --user
-          bundle install
+          curl -o /tmp/cinc-auditor.deb http://downloads.cinc.sh/files/stable/cinc-auditor/4.37.0/ubuntu/20.04/cinc-auditor_4.37.0-1_amd64.deb
+          sudo dpkg -i /tmp/cinc-auditor.deb
           cat << EOF > ~/.kong_license
           ${{ secrets.KONG_LICENSE_FILE }}
           EOF
           cp examples/hybrid/terraform.tfvars.example examples/hybrid/terraform.tfvars
-      - name: Kitchen Test
-        run: kitchen converge default || true
+      - name: Build and Test
+        run: |
+          make build
+          make test
+        working-directory: examples/hybrid/
         env:
           TF_VAR_super_admin_password: ${{ secrets.SUPER_ADMIN_PASSWORD }}
           TF_VAR_kong_database_password: ${{ secrets.KONG_DATABASE_PASSWORD }}
           TF_VAR_kong_image: ${{ secrets.KONG_IMAGE }}
-      - name: wait control plane
-        run: pushd examples/hybrid/; ws=$(terraform workspace show); popd; while [[ $(kubectl -n kong-hybrid-cp-${ws} get pods -l name=kong-hybrid-cp-${ws} -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for pod" && sleep 1; done 
-      - name: Verify
-        run: kitchen verify default
-      - name: Kitchen Destroy
-        run: kitchen destroy default
-
+      - name: Clean
+        run: make clean
+        if: ${{ always() }}
+        working-directory: examples/hybrid/
