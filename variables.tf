@@ -260,6 +260,34 @@ variable "readiness_failure_threshold" {
   default     = 3
 }
 
+########### Autoscaling settings #################
+
+variable "enable_autoscaler" {
+  description = "Should we enable horizontal pod autoscaling"
+  type        = bool
+  default     = false
+}
+
+variable "autoscaler_min_replicas" {
+  description = "Minimum number of replicas to run"
+  type        = number
+  default     = 2
+}
+
+variable "autoscaler_max_replicas" {
+  description = "Maximum number of replicas to run"
+  type        = number
+  default     = 5
+}
+
+variable "average_cpu_utilization" {
+  description = "The threashold of cpu utilization at which we trigger auto scaling"
+  type        = number
+  default     = 80
+}
+
+########### Termination settings #################
+
 variable "termination_grace_period_seconds" {
   description = "The number of secods to wait before terminating the pod"
   type        = number
