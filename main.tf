@@ -161,7 +161,7 @@ resource "kubernetes_deployment" "this-kong-deployment" {
             }
           }
         }
-
+        termination_grace_period_seconds = var.termination_grace_period_seconds
         container {
           name  = var.deployment_name
           image = var.kong_image
@@ -217,7 +217,13 @@ resource "kubernetes_deployment" "this-kong-deployment" {
               memory = var.memory_limit
             }
           }
-
+          lifecycle {
+            pre_stop {
+              exec {
+                command = ["/bin/sh", "-c", "/bin/sleep 15 && kong quit"]
+              }
+            }
+          }
           dynamic "liveness_probe" {
             for_each = lookup(var.config, "KONG_STATUS_LISTEN", "") != "" ? ["liveness_probe"] : []
             content {

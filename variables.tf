@@ -259,3 +259,9 @@ variable "readiness_failure_threshold" {
   type        = number
   default     = 3
 }
+
+variable "termination_grace_period_seconds" {
+  description = "The number of secods to wait before terminating the pod"
+  type        = number
+  default     = 40
+}

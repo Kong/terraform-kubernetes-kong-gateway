@@ -142,8 +142,6 @@ locals {
 
 }
 
-
-
 output "proxy_endpoint" {
   value = local.proxy
 }
