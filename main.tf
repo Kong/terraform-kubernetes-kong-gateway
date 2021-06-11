@@ -251,7 +251,7 @@ resource "kubernetes_deployment" "this-kong-deployment" {
           lifecycle {
             pre_stop {
               exec {
-                command = ["/bin/sh", "-c", "/bin/sleep 15 && kong quit"]
+                command = var.pre_stop_command
               }
             }
           }
