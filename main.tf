@@ -1,4 +1,9 @@
 locals {
+
+  # If the module user has not specified the URL or URI config
+  # options we can fill them in at this point. The Kubernetes
+  # Services and ingress resources are created before the deployment.
+  # So we can use there values to populate the Kong deployment configuration.
   admin_gui_map           = lookup(var.config, "KONG_ADMIN_GUI_URL", "") == "" ? { "KONG_ADMIN_GUI_URL" = local.manager } : {}
   admin_api_map           = lookup(var.config, "KONG_ADMIN_API_URI", "") == "" ? { "KONG_ADMIN_API_URI" = local.admin } : {}
   portal_api_map          = lookup(var.config, "KONG_PORTAL_API_URL", "") == "" ? { "KONG_PORTAL_API_URL" = local.portal_admin } : {}
@@ -7,6 +12,8 @@ locals {
   portal_gui_protocol_map = lookup(var.config, "KONG_PORTAL_GUI_PROTOCOL", "") == "" ? { "KONG_PORTAL_GUI_PROTOCOL" = local.portal_gui_protocol } : {}
   proxy_map               = lookup(var.config, "KONG_PROXY_URL", "") == "" ? { "KONG_PROXY_URL" = local.proxy } : {}
 
+  # If the module user has specified these values then we return an empty hash
+  # so the config merge below is a no-op
   config = merge(
     var.config,
     local.admin_gui_map,
@@ -17,6 +24,12 @@ locals {
     local.portal_gui_protocol_map,
     local.proxy_map,
   )
+
+  # Get the status enpoint details, used for the readiness and liveness
+  # probes
+  # TODO: return these as module outputs maybe?
+  status_port   = split(" ", split(":", lookup(var.config, "KONG_STATUS_LISTEN", "0.0.0.0:8100"))[1])[0]
+  status_scheme = length(split(" ", lookup(var.config, "KONG_STATUS_LISTEN", "0.0.0.0:8100"))) > 1 ? "HTTPS" : "HTTP"
 
 }
 
@@ -296,9 +309,4 @@ resource "kubernetes_deployment" "this-kong-deployment" {
       }
     }
   }
-}
-
-locals {
-  status_port   = split(" ", split(":", lookup(var.config, "KONG_STATUS_LISTEN", "0.0.0.0:8100"))[1])[0]
-  status_scheme = length(split(" ", lookup(var.config, "KONG_STATUS_LISTEN", "0.0.0.0:8100"))) > 1 ? "HTTPS" : "HTTP"
 }
