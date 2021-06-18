@@ -2,7 +2,7 @@ kube_config_file   = "~/.kube/config"
 docker_config_file = "~/.docker/config.json"
 kong_license_file  = "~/.kong_license"
 
-kong_image = "kong-docker-kong-enterprise-edition-docker.bintray.io/kong-enterprise-edition:2.3.2.0-alpine"
+kong_image = "kong/kong-gateway:2.4-alpine"
 
 super_admin_password   = "password"
 kong_database_password = "kong"
@@ -76,6 +76,9 @@ kong_data_plane_config = {
   "KONG_SSL_CERT"                    = "/etc/secrets/kong-proxy/tls.crt",
   "KONG_SSL_CERT_KEY"                = "/etc/secrets/kong-proxy/tls.key",
 }
+
+deployment_labels = { "deployment" = "true" }
+pod_labels        = { "pod" = "true" }
 
 # Enable ingress below
 #cp_ingress = {

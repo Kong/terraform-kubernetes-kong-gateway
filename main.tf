@@ -11,6 +11,7 @@ locals {
   portal_gui_url_map      = lookup(var.config, "KONG_PORTAL_GUI_URL", "") == "" ? { "KONG_PORTAL_GUI_URL" = local.portal_gui_url } : {}
   portal_gui_protocol_map = lookup(var.config, "KONG_PORTAL_GUI_PROTOCOL", "") == "" ? { "KONG_PORTAL_GUI_PROTOCOL" = local.portal_gui_protocol } : {}
   proxy_map               = lookup(var.config, "KONG_PROXY_URL", "") == "" ? { "KONG_PROXY_URL" = local.proxy } : {}
+  kong_prefix             = lookup(var.config, "KONG_PREFIX", "") == "" ? { "KONG_PREFIX" = var.kong_prefix } : {}
 
   # If the module user has specified these values then we return an empty hash
   # so the config merge below is a no-op
@@ -23,6 +24,7 @@ locals {
     local.portal_gui_url_map,
     local.portal_gui_protocol_map,
     local.proxy_map,
+    local.kong_prefix
   )
 
   # Get the status enpoint details, used for the readiness and liveness
@@ -31,6 +33,11 @@ locals {
   status_port   = split(" ", split(":", lookup(var.config, "KONG_STATUS_LISTEN", "0.0.0.0:8100"))[1])[0]
   status_scheme = length(split(" ", lookup(var.config, "KONG_STATUS_LISTEN", "0.0.0.0:8100"))) > 1 ? "HTTPS" : "HTTP"
 
+  std_labels        = { "kong-app" = var.deployment_name, "kong-deployment-name" = var.deployment_name }
+  append_labels     = var.use_global_labels ? merge(var.global_labels, local.std_labels) : local.std_labels
+  deployment_labels = merge(var.deployment_labels, local.append_labels)
+  pod_labels        = merge(var.pod_labels, local.append_labels)
+  autoscaler_labels = merge(var.autoscaler_labels, local.append_labels)
 }
 
 # optional: this module can create cluster services for you
@@ -43,6 +50,7 @@ resource "kubernetes_ingress" "this-ingress" {
     name        = each.key
     namespace   = var.namespace
     annotations = each.value.annotations
+    labels      = each.value.labels
   }
   spec {
     tls {
@@ -79,8 +87,10 @@ resource "kubernetes_service" "this-service" {
     name        = each.key
     namespace   = var.namespace
     annotations = each.value.annotations
+    labels      = each.value.labels
   }
   spec {
+    type = each.value.type
     dynamic "port" {
       for_each = each.value.ports
       content {
@@ -91,37 +101,7 @@ resource "kubernetes_service" "this-service" {
       }
     }
     selector = {
-      app = var.deployment_name
-    }
-  }
-}
-
-# optional: this module can create load balancer services for you
-# if you pass it a list of service objects. see variables for
-# details
-resource "kubernetes_service" "this-load-balancer-service" {
-  for_each = var.load_balancer_services
-  metadata {
-    name        = each.key
-    namespace   = var.namespace
-    annotations = each.value.annotations
-  }
-  spec {
-    type                        = "LoadBalancer"
-    load_balancer_source_ranges = each.value.load_balancer_source_ranges
-    external_traffic_policy     = each.value.external_traffic_policy
-    health_check_node_port      = each.value.external_traffic_policy == "Local" ? each.value.health_check_node_port : null
-    dynamic "port" {
-      for_each = each.value.ports
-      content {
-        name        = port.key
-        port        = port.value.port
-        protocol    = port.value.protocol
-        target_port = port.value.target_port
-      }
-    }
-    selector = {
-      app = var.deployment_name
+      kong-app = var.deployment_name
     }
   }
 }
@@ -132,6 +112,7 @@ resource "kubernetes_horizontal_pod_autoscaler" "this-autoscaler" {
   metadata {
     name      = var.deployment_name
     namespace = var.namespace
+    labels    = local.autoscaler_labels
   }
 
   spec {
@@ -162,21 +143,19 @@ resource "kubernetes_deployment" "this-kong-deployment" {
   metadata {
     name      = var.deployment_name
     namespace = var.namespace
+    labels    = local.deployment_labels
   }
   spec {
     selector {
       match_labels = {
-        app = var.deployment_name
+        kong-app = var.deployment_name
       }
     }
-    replicas = var.deployment_replicas
+    replicas = var.enable_autoscaler ? null : var.deployment_replicas
     template {
       metadata {
         annotations = var.deployment_annotations
-        labels = {
-          name = var.deployment_name
-          app  = var.deployment_name
-        }
+        labels      = local.pod_labels
       }
 
       spec {
@@ -205,8 +184,40 @@ resource "kubernetes_deployment" "this-kong-deployment" {
             }
           }
         }
+
+        # In order to run with a read only root
+        # filesystem we need to mount some external
+        # volumes
+        dynamic "volume" {
+          for_each = toset(var.volume_kong_mounts)
+          content {
+            name = volume.value.name
+            empty_dir {}
+          }
+        }
+
         termination_grace_period_seconds = var.termination_grace_period_seconds
+        security_context {
+          fs_group            = var.pod_security_context.fs_group
+          run_as_group        = var.pod_security_context.run_as_group
+          run_as_non_root     = var.pod_security_context.run_as_non_root
+          run_as_user         = var.pod_security_context.run_as_user
+          supplemental_groups = var.pod_security_context.supplemental_groups
+        }
         container {
+          security_context {
+            allow_privilege_escalation = var.container_security_context.allow_privilege_escalation
+            capabilities {
+              add  = var.container_security_context.capabilities.add
+              drop = var.container_security_context.capabilities.drop
+            }
+            privileged                = var.container_security_context.read_only_root_filesystem
+            read_only_root_filesystem = var.container_security_context.read_only_root_filesystem
+            run_as_group              = var.container_security_context.run_as_group
+            run_as_non_root           = var.container_security_context.run_as_non_root
+            run_as_user               = var.container_security_context.run_as_user
+          }
+
           name  = var.deployment_name
           image = var.kong_image
           # The module takes a list of config
@@ -239,6 +250,24 @@ resource "kubernetes_deployment" "this-kong-deployment" {
               }
             }
           }
+          # The module takes a list of config map
+          # objects as var.config_map_env. This dynamic
+          # block will iterate over that list and
+          # add the items as environment variables
+          # to each pod. The values will be pulled from
+          # kubernetes config maps
+          dynamic "env" {
+            for_each = var.config_map_env
+            content {
+              name = env.value.name
+              value_from {
+                config_map_key_ref {
+                  name = env.key
+                  key  = env.value
+                }
+              }
+            }
+          }
           # A list of volumes can be passed to this module
           # This block will dynamically add the volumes in that
           # list to each pod
@@ -251,6 +280,17 @@ resource "kubernetes_deployment" "this-kong-deployment" {
             }
           }
 
+          # A list of default kong volumes
+          # these enable kong to run with a
+          # read only root fs
+          dynamic "volume_mount" {
+            for_each = toset(var.volume_kong_mounts)
+            content {
+              mount_path = volume_mount.value.mount_path
+              name       = volume_mount.value.name
+              read_only  = volume_mount.value.read_only
+            }
+          }
           resources {
             requests = {
               cpu    = var.cpu_request
@@ -268,6 +308,7 @@ resource "kubernetes_deployment" "this-kong-deployment" {
               }
             }
           }
+
           dynamic "liveness_probe" {
             for_each = lookup(var.config, "KONG_STATUS_LISTEN", "") != "" ? ["liveness_probe"] : []
             content {

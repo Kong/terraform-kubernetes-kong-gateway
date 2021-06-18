@@ -1,6 +1,6 @@
 locals {
-  # Data structure for all ClusterIP services
-  cluster_ip_services = {
+  # Data structure for all services
+  s_map = {
     for name, svc in kubernetes_service.this-service :
     name => {
       for port in svc.spec.0.port :
@@ -13,22 +13,8 @@ locals {
     }
   }
 
-  # Data structure for all LoadBalancer services
-  load_balancer_services = {
-    for name, svc in kubernetes_service.this-load-balancer-service :
-    name => {
-      for port in svc.spec.0.port :
-      port.name => {
-        endpoint = svc.status.0.load_balancer.0.ingress.0.hostname != "" ? "${svc.status.0.load_balancer.0.ingress.0.hostname}:${port.port}" : "${svc.status.0.load_balancer.0.ingress.0.ip}:${port.port}"
-        port     = port.port
-        ip       = svc.status.0.load_balancer.0.ingress.0.hostname != "" ? svc.status.0.load_balancer.0.ingress.0.hostname : svc.status.0.load_balancer.0.ingress.0.ip
-        name     = port.name
-      }
-    }
-  }
-
   # Data structure for all ingress based services
-  ingress = {
+  i_map = {
     for name, svc in kubernetes_ingress.this-ingress :
     name => {
       for rule in svc.spec.0.rule :
@@ -41,12 +27,6 @@ locals {
     }
   }
 
-  # Merge the ClusterIP and LB services together
-  # we will then flatten them out into on array of objects keyed off
-  # port name.
-  s_map = merge(local.cluster_ip_services, local.load_balancer_services)
-  i_map = local.ingress
-
   services = flatten([
     for k, v in local.s_map :
     [
@@ -57,7 +37,7 @@ locals {
 
   # We also flatten the Ingress nested hash and
   # create a new hash keyed off rule name
-  ingresses = flatten([
+  ingress = flatten([
     for k, v in local.i_map :
     [
       for x, y in v :
@@ -74,62 +54,62 @@ locals {
   ########## Look up ingress endpoints #############
 
   proxy_ingress_endpoint = flatten([
-    for item in local.ingresses :
+    for item in local.ingress :
     lookup(item, "endpoint", "") if lookup(item, "name", "") == var.service_name_map.kong_proxy
   ])
 
   proxy_ssl_ingress_endpoint = flatten([
-    for item in local.ingresses :
+    for item in local.ingress :
     lookup(item, "endpoint", "") if lookup(item, "name", "") == var.service_name_map.kong_proxy_ssl
   ])
 
   admin_ingress_endpoint = flatten([
-    for item in local.ingresses :
+    for item in local.ingress :
     lookup(item, "endpoint", "") if lookup(item, "name", "") == var.service_name_map.kong_admin
   ])
 
   admin_ssl_ingress_endpoint = flatten([
-    for item in local.ingresses :
+    for item in local.ingress :
     lookup(item, "endpoint", "") if lookup(item, "name", "") == var.service_name_map.kong_admin_ssl
   ])
 
   manager_ingress_endpoint = flatten([
-    for item in local.ingresses :
+    for item in local.ingress :
     lookup(item, "endpoint", "") if lookup(item, "name", "") == var.service_name_map.kong_manager
   ])
 
   manager_ssl_ingress_endpoint = flatten([
-    for item in local.ingresses :
+    for item in local.ingress :
     lookup(item, "endpoint", "") if lookup(item, "name", "") == var.service_name_map.kong_manager_ssl
   ])
 
   portal_admin_ingress_endpoint = flatten([
-    for item in local.ingresses :
+    for item in local.ingress :
     lookup(item, "endpoint", "") if lookup(item, "name", "") == var.service_name_map.kong_portal_admin
   ])
 
   portal_admin_ssl_ingress_endpoint = flatten([
-    for item in local.ingresses :
+    for item in local.ingress :
     lookup(item, "endpoint", "") if lookup(item, "name", "") == var.service_name_map.kong_portal_admin_ssl
   ])
 
   portal_gui_ingress_endpoint = flatten([
-    for item in local.ingresses :
+    for item in local.ingress :
     lookup(item, "endpoint", "") if lookup(item, "name", "") == var.service_name_map.kong_portal_gui
   ])
 
   portal_gui_ssl_ingress_endpoint = flatten([
-    for item in local.ingresses :
+    for item in local.ingress :
     lookup(item, "endpoint", "") if lookup(item, "name", "") == var.service_name_map.kong_portal_gui_ssl
   ])
 
   cluster_ingress_endpoint = flatten([
-    for item in local.ingresses :
+    for item in local.ingress :
     lookup(item, "endpoint", "") if lookup(item, "name", "") == var.service_name_map.kong_cluster
   ])
 
   telemetry_ingress_endpoint = flatten([
-    for item in local.ingresses :
+    for item in local.ingress :
     lookup(item, "endpoint", "") if lookup(item, "name", "") == var.service_name_map.kong_telemetry
   ])
 
@@ -331,14 +311,6 @@ output "ingress" {
 
 output "services" {
   value = local.services
-}
-
-output "load_balancer_services" {
-  value = local.load_balancer_services
-}
-
-output "lb_raw" {
-  value = kubernetes_service.this-load-balancer-service
 }
 
 output "svc_raw" {
