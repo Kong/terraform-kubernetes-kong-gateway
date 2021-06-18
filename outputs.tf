@@ -5,10 +5,22 @@ locals {
     name => {
       for port in svc.spec.0.port :
       port.name => {
-        endpoint = "${svc.spec.0.cluster_ip}:${port.port}"
-        port     = port.port
-        ip       = svc.spec.0.cluster_ip
-        name     = port.name
+        endpoint = (
+          length(svc.status.0.load_balancer.0.ingress) > 0 ?
+          svc.status.0.load_balancer.0.ingress.0.hostname != "" ?
+          "${svc.status.0.load_balancer.0.ingress.0.hostname}:${port.port}" :
+          "${svc.status.0.load_balancer.0.ingress.0.ip}:${port.port}" :
+          "${svc.spec.0.cluster_ip}:${port.port}"
+        )
+        port = port.port
+        ip = (
+          length(svc.status.0.load_balancer.0.ingress) > 0 ?
+          svc.status.0.load_balancer.0.ingress.0.hostname != "" ?
+          svc.status.0.load_balancer.0.ingress.0.hostname :
+          svc.status.0.load_balancer.0.ingress.0.ip :
+          svc.spec.0.cluster_ip
+        )
+        name = port.name
       }
     }
   }
