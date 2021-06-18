@@ -84,6 +84,7 @@ variable "ingress" {
   description = "A map that represents kubernetes ingress resources"
   type = map(object({
     annotations = map(string)
+    labels      = map(string)
     tls = object({
       hosts       = list(string)
       secret_name = string
@@ -99,26 +100,12 @@ variable "ingress" {
   default = {}
 }
 
-variable "load_balancer_services" {
-  description = "A map that represent the kong services to expose as a LoadBalancer service in the cluster"
-  type = map(object({
-    load_balancer_source_ranges = list(string)
-    annotations                 = map(string)
-    external_traffic_policy     = string
-    health_check_node_port      = number
-    ports = map(object({
-      port        = number
-      protocol    = string
-      target_port = number
-    }))
-  }))
-  default = {}
-}
-
 variable "services" {
   description = "A map that represent the kong services to create in the cluster"
   type = map(object({
     annotations = map(string)
+    labels      = map(string)
+    type        = string
     ports = map(object({
       port        = number
       protocol    = string
@@ -140,6 +127,27 @@ variable "volume_mounts" {
       mount_path = "/etc/secrets/kong-cluster-cert"
       name       = "kong-cluster-cert"
       read_only  = true
+    }
+  ]
+}
+
+variable "volume_kong_mounts" {
+  description = "Pod volumes to mount into the container's filesystem. These allow kong to run with a read only root"
+  type = list(object({
+    mount_path = string
+    name       = string
+    read_only  = bool
+  }))
+  default = [
+    {
+      mount_path = "/tmp"
+      name       = "kong-tmp"
+      read_only  = false
+    },
+    {
+      mount_path = "/kong_prefix"
+      name       = "kong-prefix"
+      read_only  = false
     }
   ]
 }
@@ -185,13 +193,13 @@ variable "memory_limit" {
 variable "cpu_request" {
   description = "The pod cpu request to set"
   type        = string
-  default     = "100m"
+  default     = "250m"
 }
 
 variable "memory_request" {
   description = "The pod memory request to set"
   type        = string
-  default     = "256Mi"
+  default     = "500Mi"
 }
 
 variable "status_path" {
@@ -298,4 +306,100 @@ variable "pre_stop_command" {
   description = "The command to run just before terminating kong"
   type        = list(string)
   default     = ["/bin/sh", "-c", "/bin/sleep 15 && kong quit"]
+}
+
+########### Labels ###############################
+
+variable "use_global_labels" {
+  description = "If set to true the content from global_labels will be set as labels on all resources"
+  type        = bool
+  default     = true
+}
+
+variable "global_labels" {
+  description = "Labels to apply to all resources if use_global_labels is set to true"
+  type        = map(string)
+  default     = {}
+}
+
+variable "deployment_labels" {
+  description = "Labels to apply to the deployment"
+  type        = map(string)
+  default     = {}
+}
+
+variable "pod_labels" {
+  description = "Labels to apply to the pods deployed by this deployment"
+  type        = map(string)
+  default     = {}
+}
+
+variable "autoscaler_labels" {
+  description = "Labels to apply to the autoscale used by this deployment (if enabled)"
+  type        = map(string)
+  default     = {}
+}
+
+########### Security Context #####################
+
+variable "pod_security_context" {
+  description = "The security contexts to set for this deployments pods"
+  type = object({
+    fs_group            = string
+    run_as_group        = string
+    run_as_non_root     = bool
+    run_as_user         = string
+    supplemental_groups = list(string)
+  })
+  default = {
+    fs_group            = null
+    run_as_group        = 65533
+    run_as_non_root     = true
+    run_as_user         = 100
+    supplemental_groups = null
+  }
+}
+
+variable "container_security_context" {
+  description = "The security contexts to set for this deployments containers"
+  type = object({
+    allow_privilege_escalation = bool
+    capabilities = object({
+      add  = list(string)
+      drop = list(string)
+    })
+    privileged                = bool
+    read_only_root_filesystem = bool
+    run_as_group              = string
+    run_as_non_root           = bool
+    run_as_user               = string
+  })
+  default = {
+    allow_privilege_escalation = null
+    capabilities = {
+      add  = []
+      drop = ["all"]
+    }
+    privileged                = false
+    read_only_root_filesystem = true
+    run_as_group              = 65533
+    run_as_non_root           = true
+    run_as_user               = 100
+  }
+}
+
+########### Filesystem ###########################
+
+variable "kong_prefix" {
+  description = "The path on the filesystem to use for the kong prefix"
+  type        = string
+  default     = "/kong_prefix"
+}
+
+########### Config Maps ##########################
+
+variable "config_map_env" {
+  description = "Map of config maps to use as env vars"
+  type        = map(string)
+  default     = {}
 }

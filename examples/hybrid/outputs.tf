@@ -15,11 +15,3 @@ output "kong-proxy-endpoint-ip" {
 output "kong-super-admin-token" {
   value = var.super_admin_password
 }
-
-output "control_plane_ingress" {
-  value = module.kong-cp.ingress
-}
-
-output "data_plane_ingress" {
-  value = module.kong-dp.ingress
-}

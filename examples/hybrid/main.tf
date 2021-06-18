@@ -185,40 +185,42 @@ locals {
 
 # Use the Kong module to create a cp
 module "kong-cp" {
-  source                 = "../../"
-  deployment_name        = local.kong_cp_deployment_name
-  namespace              = local.cp_ns
-  deployment_replicas    = var.control_plane_replicas
-  config                 = local.kong_cp_config
-  secret_config          = local.kong_cp_secret_config
-  kong_image             = local.kong_image
-  image_pull_secrets     = local.kong_image_pull_secrets
-  volume_mounts          = local.kong_cp_volume_mounts
-  volume_secrets         = local.kong_cp_volume_secrets
-  services               = var.cp_svcs
-  load_balancer_services = var.cp_lb_svcs
-  ingress                = var.cp_ingress
-  enable_autoscaler      = var.enable_autoscaler
-  depends_on             = [kubernetes_namespace.kong]
+  source              = "../../"
+  deployment_name     = local.kong_cp_deployment_name
+  namespace           = local.cp_ns
+  deployment_replicas = var.control_plane_replicas
+  config              = local.kong_cp_config
+  secret_config       = local.kong_cp_secret_config
+  kong_image          = local.kong_image
+  image_pull_secrets  = local.kong_image_pull_secrets
+  volume_mounts       = local.kong_cp_volume_mounts
+  volume_secrets      = local.kong_cp_volume_secrets
+  services            = var.cp_svcs
+  ingress             = var.cp_ingress
+  enable_autoscaler   = var.enable_autoscaler
+  deployment_labels   = var.deployment_labels
+  pod_labels          = var.pod_labels
+  depends_on          = [kubernetes_namespace.kong]
 }
 
 # Use the Kong module to create a dp
 module "kong-dp" {
-  source                 = "../../"
-  deployment_name        = local.kong_dp_deployment_name
-  namespace              = local.dp_ns
-  deployment_replicas    = var.data_plane_replicas
-  config                 = local.kong_dp_config
-  secret_config          = local.kong_dp_secret_config
-  kong_image             = local.kong_image
-  image_pull_secrets     = local.kong_image_pull_secrets
-  volume_mounts          = local.kong_dp_volume_mounts
-  volume_secrets         = local.kong_dp_volume_secrets
-  services               = var.dp_svcs
-  load_balancer_services = var.dp_lb_svcs
-  ingress                = var.dp_ingress
-  enable_autoscaler      = var.enable_autoscaler
-  depends_on             = [kubernetes_namespace.kong]
+  source              = "../../"
+  deployment_name     = local.kong_dp_deployment_name
+  namespace           = local.dp_ns
+  deployment_replicas = var.data_plane_replicas
+  config              = local.kong_dp_config
+  secret_config       = local.kong_dp_secret_config
+  kong_image          = local.kong_image
+  image_pull_secrets  = local.kong_image_pull_secrets
+  volume_mounts       = local.kong_dp_volume_mounts
+  volume_secrets      = local.kong_dp_volume_secrets
+  services            = var.dp_svcs
+  ingress             = var.dp_ingress
+  enable_autoscaler   = var.enable_autoscaler
+  deployment_labels   = var.deployment_labels
+  pod_labels          = var.pod_labels
+  depends_on          = [kubernetes_namespace.kong]
 }
 
 locals {
