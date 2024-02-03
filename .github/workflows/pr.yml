@@ -7,6 +7,7 @@ on:
 
 jobs:
   format:
+    timeout-minutes: ${{ fromJSON(vars.GHA_DEFAULT_TIMEOUT) }}
     name: Terraform-Format
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
@@ -23,6 +24,7 @@ jobs:
         continue-on-error: true
 
   deployment:
+    timeout-minutes: ${{ fromJSON(vars.GHA_DEFAULT_TIMEOUT) }}
     name: setup
     runs-on: ubuntu-latest
     if: github.event.pull_request.draft == false
