@@ -6,6 +6,7 @@ on:
 
 jobs:
   merge_job:
+    timeout-minutes: ${{ fromJSON(vars.GHA_DEFAULT_TIMEOUT) }}
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
@@ -21,6 +22,7 @@ jobs:
         RELEASE_BRANCHES: main
 
   close_job:
+    timeout-minutes: ${{ fromJSON(vars.GHA_DEFAULT_TIMEOUT) }}
     if: github.event.pull_request.merged == false
     runs-on: ubuntu-latest
     steps:
